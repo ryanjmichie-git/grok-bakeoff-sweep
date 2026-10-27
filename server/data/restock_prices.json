@@ -1,0 +1,32 @@
+[
+  {
+    "sku": "WDG-001",
+    "unit_cost": 24.99,
+    "source": "server/generate_data.py product catalog; transactions.json TXN-2025-0907 7497.00 = 300 x 24.99"
+  },
+  {
+    "sku": "BRG-102",
+    "unit_cost": 89.50,
+    "source": "server/generate_data.py product catalog; transactions.json TXN-2025-0901 13425.00 = 150 x 89.50"
+  },
+  {
+    "sku": "GSK-203",
+    "unit_cost": 12.75,
+    "source": "server/generate_data.py product catalog; transactions.json TXN-2025-0905 10837.50 = 850 x 12.75"
+  },
+  {
+    "sku": "MTR-304",
+    "unit_cost": 445.00,
+    "source": "server/generate_data.py product catalog; transactions.json TXN-2025-0909 8900.00 = 20 x 445.00"
+  },
+  {
+    "sku": "FLT-405",
+    "unit_cost": 8.25,
+    "source": "server/generate_data.py product catalog; transactions.json TXN-2025-0903 6600.00 = 800 x 8.25"
+  },
+  {
+    "sku": "VLV-506",
+    "unit_cost": 156.00,
+    "source": "server/generate_data.py product catalog; transactions.json TXN-2025-0911 7800.00 = 50 x 156.00"
+  }
+]

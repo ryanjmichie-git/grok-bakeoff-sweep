@@ -1,0 +1,13 @@
+{
+  "name": "grok-bakeoff-sweep",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "node bin/check-vue.mjs",
+    "lint": "node bin/check-scope.mjs",
+    "test:hook": "node bin/test-stop-verify.mjs",
+    "build": "npm --prefix client run build",
+    "test:backend": "cd tests && uv run --project ../server python -m pytest -q -p no:cacheprovider",
+    "verify": "npm run typecheck && npm run lint && npm run test:hook && npm run build && npm run test:backend"
+  }
+}
