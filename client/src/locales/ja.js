@@ -10,7 +10,8 @@ export default {
     reports: 'レポート',
     backlog: 'バックログ',
     companyName: '触媒コンポーネンツ',
-    subtitle: '在庫管理システム'
+    subtitle: '在庫管理システム',
+    main: 'メイン'
   },
 
   // Dashboard
@@ -58,7 +59,9 @@ export default {
       daysDelayed: '遅延日数',
       priority: '優先度',
       unitsShort: '単位不足',
-      days: '日'
+      days: '日',
+      longDelay: '長期',
+      shortDelay: '短期'
     },
     topProducts: {
       title: '収益別トップ製品',
@@ -214,7 +217,8 @@ export default {
     category: 'カテゴリ',
     orderStatus: '注文ステータス',
     all: 'すべて',
-    allMonths: 'すべての月'
+    allMonths: 'すべての月',
+    reset: 'すべてのフィルターをリセット'
   },
 
   // Statuses
@@ -374,7 +378,9 @@ export default {
     priority: '優先度',
     dueDate: '期限',
     addTask: 'タスクを追加',
-    noTasks: 'タスクがありません。上記からタスクを追加してください！'
+    noTasks: 'タスクがありません。上記からタスクを追加してください！',
+    deleteTask: 'タスクを削除',
+    completed: '完了'
   },
 
   // Restocking
@@ -457,7 +463,8 @@ export default {
     search: '検索',
     filter: 'フィルター',
     export: 'エクスポート',
-    items: '件'
+    items: '件',
+    skipToContent: 'メインコンテンツへスキップ'
   },
 
   // Product Names

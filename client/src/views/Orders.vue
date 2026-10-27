@@ -50,9 +50,14 @@
                 <td class="col-customer">{{ translateCustomerName(order.customer) }}</td>
                 <td class="col-items">
                   <div class="items-details">
-                    <div class="items-summary" @click="toggleItems(order.id)">
+                    <button
+                      type="button"
+                      class="items-summary"
+                      :aria-expanded="!!openItems[order.id]"
+                      @click="toggleItems(order.id)"
+                    >
                       {{ t('orders.itemsCount', { count: order.items.length }) }}
-                    </div>
+                    </button>
                     <div v-if="openItems[order.id]" class="items-dropdown">
                       <div v-for="(item, idx) in order.items" :key="idx" class="item-entry">
                         <span class="item-name">{{ translateProductName(item.name) }}</span>
@@ -158,10 +163,10 @@ export default {
         const fetchedOrders = await api.getOrders(filters)
 
         // Sort orders by order_date (earliest first)
-        orders.value = fetchedOrders.sort((a, b) => {
-          const dateA = new Date(a.order_date)
-          const dateB = new Date(b.order_date)
-          return dateB - dateA
+        orders.value = fetchedOrders.slice().sort((a, b) => {
+          if (a.order_date < b.order_date) return -1
+          if (a.order_date > b.order_date) return 1
+          return 0
         })
       } catch (err) {
         error.value = 'Failed to load orders: ' + err.message
@@ -284,11 +289,16 @@ export default {
 
 .items-summary {
   cursor: pointer;
-  color: #3b82f6;
+  color: #1d4ed8;
   font-weight: 500;
   list-style: none;
   user-select: none;
   display: inline-block;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 500;
 }
 
 .items-summary::-webkit-details-marker {
@@ -308,8 +318,12 @@ export default {
 }
 
 .items-summary:hover {
-  color: #2563eb;
+  color: #1e40af;
   text-decoration: underline;
+}
+
+.items-summary[aria-expanded="true"]::before {
+  transform: rotate(90deg);
 }
 
 /* Dropdown container */

@@ -2,11 +2,11 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen && costData" class="modal-overlay" @click="close">
-        <div class="modal-container" @click.stop>
+        <div ref="dialogRef" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="cost-dialog-title" @click.stop>
           <div class="modal-header">
-            <h3 class="modal-title">{{ costData.month }} Cost Breakdown</h3>
-            <button class="close-button" @click="close">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <h3 id="cost-dialog-title" class="modal-title">{{ costData.month }} Cost Breakdown</h3>
+            <button type="button" class="close-button" :aria-label="t('common.close')" @click="close">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
@@ -87,7 +87,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button type="button" class="btn-secondary" @click="close">Close</button>
           </div>
         </div>
       </div>
@@ -96,10 +96,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useI18n } from '../composables/useI18n'
+import { useDialog } from '../composables/useDialog'
 
-const { currentCurrency } = useI18n()
+const { t, currentCurrency } = useI18n()
 
 const currencySymbol = computed(() => {
   return currentCurrency.value === 'JPY' ? '¥' : '$'
@@ -147,6 +148,9 @@ const getOverheadPercentage = () => {
 const close = () => {
   emit('close')
 }
+
+const dialogRef = ref(null)
+useDialog(toRef(props, 'isOpen'), dialogRef, close)
 </script>
 
 <style scoped>
@@ -294,22 +298,22 @@ const close = () => {
 }
 
 .cost-item.procurement .cost-icon {
-  background: #3b82f6;
+  background: #1d4ed8;
   color: white;
 }
 
 .cost-item.operational .cost-icon {
-  background: #8b5cf6;
+  background: #6d28d9;
   color: white;
 }
 
 .cost-item.labor .cost-icon {
-  background: #10b981;
+  background: #047857;
   color: white;
 }
 
 .cost-item.overhead .cost-icon {
-  background: #f59e0b;
+  background: #b45309;
   color: white;
 }
 

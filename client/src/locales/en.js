@@ -10,7 +10,8 @@ export default {
     reports: 'Reports',
     backlog: 'Backlog',
     companyName: 'Catalyst Components',
-    subtitle: 'Inventory Management System'
+    subtitle: 'Inventory Management System',
+    main: 'Main'
   },
 
   // Dashboard
@@ -58,7 +59,9 @@ export default {
       daysDelayed: 'Days Delayed',
       priority: 'Priority',
       unitsShort: 'units short',
-      days: 'days'
+      days: 'days',
+      longDelay: 'Long',
+      shortDelay: 'Short'
     },
     topProducts: {
       title: 'Top Products by Revenue',
@@ -214,7 +217,8 @@ export default {
     category: 'Category',
     orderStatus: 'Order Status',
     all: 'All',
-    allMonths: 'All Months'
+    allMonths: 'All Months',
+    reset: 'Reset all filters'
   },
 
   // Statuses
@@ -374,7 +378,9 @@ export default {
     priority: 'Priority',
     dueDate: 'Due Date',
     addTask: 'Add Task',
-    noTasks: 'No tasks yet. Add your first task above!'
+    noTasks: 'No tasks yet. Add your first task above!',
+    deleteTask: 'Delete task',
+    completed: 'Completed'
   },
 
   // Restocking
@@ -457,6 +463,7 @@ export default {
     search: 'Search',
     filter: 'Filter',
     export: 'Export',
-    items: 'items'
+    items: 'items',
+    skipToContent: 'Skip to main content'
   }
 }

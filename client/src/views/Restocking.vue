@@ -16,7 +16,7 @@
           <h3 class="card-title">{{ t('restocking.budgetTitle') }}</h3>
         </div>
         <div class="budget-control">
-          <label class="budget-label">{{ t('restocking.budgetLabel') }}</label>
+          <label class="budget-label" for="restock-budget">{{ t('restocking.budgetLabel') }}</label>
           <input
             id="restock-budget"
             class="budget-slider"
@@ -97,7 +97,7 @@
                 <td>
                   <template v-if="item.quantity <= item.need">
                     {{ t('restocking.quantityOf', { quantity: item.quantity, need: item.need }) }}
-                    <span class="badge warning">{{ t('restocking.partial') }}</span>
+                    <span v-if="item.quantity < item.need" class="badge warning">{{ t('restocking.partial') }}</span>
                   </template>
                   <template v-else>{{ item.quantity }}</template>
                 </td>

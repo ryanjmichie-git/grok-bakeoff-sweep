@@ -52,8 +52,10 @@
               <div class="bar-container">
                 <div
                   class="bar"
+                  role="img"
                   :style="{ height: getBarHeight(month.revenue) + 'px' }"
                   :title="formatCurrency(month.revenue, currentCurrency)"
+                  :aria-label="`${formatMonth(month.month)} ${formatCurrency(month.revenue, currentCurrency)}`"
                 ></div>
               </div>
               <div class="bar-label">{{ formatMonth(month.month) }}</div>
@@ -247,7 +249,7 @@ export default {
 
     const getGrowthRate = (current, previous) => {
       if (previous === 0) return t('reports.notAvailable')
-      const rate = ((current - previous) / current) * 100
+      const rate = ((current - previous) / previous) * 100
       const sign = rate > 0 ? '+' : ''
       const marker = rate > 0 ? t('reports.up') : rate < 0 ? t('reports.down') : t('reports.flat')
       return `${marker} ${sign}${rate.toFixed(1)}%`
@@ -392,7 +394,7 @@ export default {
 
 .stat-label {
   font-size: 0.875rem;
-  color: #cbd5e1;
+  color: #475569;
   margin-bottom: 0.5rem;
 }
 
@@ -425,7 +427,7 @@ export default {
 }
 
 .positive-change {
-  color: #16a34a;
+  color: #166534;
   font-weight: 600;
 }
 

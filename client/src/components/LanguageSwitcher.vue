@@ -1,9 +1,11 @@
 <template>
-  <div class="language-switcher">
+  <div class="language-switcher" @focusout="handleFocusOut" @keydown.esc="isDropdownOpen = false">
     <button
+      type="button"
       class="language-button"
+      :aria-expanded="isDropdownOpen"
+      :aria-label="`${t('language.selectLanguage')}, ${localeName}`"
       @click="toggleDropdown"
-      @blur="handleBlur"
     >
       <svg
         width="20"
@@ -34,9 +36,11 @@
       <button
         v-for="locale in availableLocales"
         :key="locale"
+        type="button"
         class="dropdown-item"
         :class="{ active: currentLocale === locale }"
-        @mousedown.prevent="selectLanguage(locale)"
+        :aria-current="currentLocale === locale ? 'true' : undefined"
+        @click="selectLanguage(locale)"
       >
         <span class="language-name">{{ getLanguageName(locale) }}</span>
         <svg
@@ -58,7 +62,7 @@
 import { ref } from 'vue'
 import { useI18n } from '../composables/useI18n'
 
-const { currentLocale, setLocale, availableLocales, localeName } = useI18n()
+const { t, currentLocale, setLocale, availableLocales, localeName } = useI18n()
 
 const isDropdownOpen = ref(false)
 
@@ -75,11 +79,11 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const handleBlur = () => {
-  // Delay to allow mousedown events on dropdown items to fire first
-  setTimeout(() => {
+const handleFocusOut = (event) => {
+  const next = event.relatedTarget
+  if (!next || !event.currentTarget.contains(next)) {
     isDropdownOpen.value = false
-  }, 200)
+  }
 }
 
 const selectLanguage = (locale) => {
@@ -169,7 +173,8 @@ const selectLanguage = (locale) => {
 
 .dropdown-item.active {
   background: #eff6ff;
-  color: #2563eb;
+  color: #1e40af;
+  font-weight: 700;
 }
 
 .language-name {

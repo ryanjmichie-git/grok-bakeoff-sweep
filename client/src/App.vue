@@ -1,34 +1,35 @@
 <template>
   <div class="app">
+    <a class="skip-link" href="#main-content">{{ t('common.skipToContent') }}</a>
     <header class="top-nav">
       <div class="nav-container">
         <div class="logo">
           <h1>{{ t('nav.companyName') }}</h1>
           <span class="subtitle">{{ t('nav.subtitle') }}</span>
         </div>
-        <nav class="nav-tabs">
-          <router-link to="/" :class="{ active: $route.path === '/' }">
+        <nav class="nav-tabs" :aria-label="t('nav.main')">
+          <router-link to="/" :class="{ active: $route.path === '/' }" :aria-current="$route.path === '/' ? 'page' : undefined">
             {{ t('nav.overview') }}
           </router-link>
-          <router-link to="/inventory" :class="{ active: $route.path === '/inventory' }">
+          <router-link to="/inventory" :class="{ active: $route.path === '/inventory' }" :aria-current="$route.path === '/inventory' ? 'page' : undefined">
             {{ t('nav.inventory') }}
           </router-link>
-          <router-link to="/orders" :class="{ active: $route.path === '/orders' }">
+          <router-link to="/orders" :class="{ active: $route.path === '/orders' }" :aria-current="$route.path === '/orders' ? 'page' : undefined">
             {{ t('nav.orders') }}
           </router-link>
-          <router-link to="/spending" :class="{ active: $route.path === '/spending' }">
+          <router-link to="/spending" :class="{ active: $route.path === '/spending' }" :aria-current="$route.path === '/spending' ? 'page' : undefined">
             {{ t('nav.finance') }}
           </router-link>
-          <router-link to="/demand" :class="{ active: $route.path === '/demand' }">
+          <router-link to="/demand" :class="{ active: $route.path === '/demand' }" :aria-current="$route.path === '/demand' ? 'page' : undefined">
             {{ t('nav.demandForecast') }}
           </router-link>
-          <router-link to="/restocking" :class="{ active: $route.path === '/restocking' }">
+          <router-link to="/restocking" :class="{ active: $route.path === '/restocking' }" :aria-current="$route.path === '/restocking' ? 'page' : undefined">
             {{ t('nav.restocking') }}
           </router-link>
-          <router-link to="/reports" :class="{ active: $route.path === '/reports' }">
+          <router-link to="/reports" :class="{ active: $route.path === '/reports' }" :aria-current="$route.path === '/reports' ? 'page' : undefined">
             {{ t('nav.reports') }}
           </router-link>
-          <router-link to="/backlog" :class="{ active: $route.path === '/backlog' }">
+          <router-link to="/backlog" :class="{ active: $route.path === '/backlog' }" :aria-current="$route.path === '/backlog' ? 'page' : undefined">
             {{ t('nav.backlog') }}
           </router-link>
         </nav>
@@ -40,7 +41,7 @@
       </div>
     </header>
     <FilterBar />
-    <main class="main-content">
+    <main id="main-content" class="main-content" tabindex="-1">
       <router-view />
     </main>
 
@@ -186,6 +187,51 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  z-index: 10000;
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 0 0 8px 8px;
+  transform: translateY(-120%);
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
 }
 
 .top-nav {

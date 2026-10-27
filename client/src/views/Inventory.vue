@@ -12,18 +12,23 @@
         <div class="card-header">
           <h3 class="card-title">{{ t('inventory.stockLevels') }} ({{ filteredItems.length }} {{ t('inventory.skus') }})</h3>
           <div class="search-box">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <label class="sr-only" for="inventory-search">{{ t('inventory.searchPlaceholder') }}</label>
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
             </svg>
             <input
+              id="inventory-search"
               v-model="searchQuery"
               type="text"
               class="search-input"
+              :placeholder="t('inventory.searchPlaceholder')"
             />
             <button
               v-if="searchQuery"
+              type="button"
               @click="searchQuery = ''"
               class="clear-search"
+              :aria-label="t('inventory.clearSearch')"
               :title="t('inventory.clearSearch')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -55,7 +60,7 @@
                 @click="showItemDetail(item)"
               >
                 <td><strong>{{ item.sku }}</strong></td>
-                <td>{{ translateProductName(item.name) }}</td>
+                <td><button type="button" class="text-button" @click="showItemDetail(item)">{{ translateProductName(item.name) }}</button></td>
                 <td>{{ translateCategory(item.category) }}</td>
                 <td><strong>{{ item.quantity_on_hand }}</strong></td>
                 <td>{{ item.reorder_point }}</td>
@@ -134,9 +139,10 @@ export default {
       // Apply search filter if query exists
       if (searchQuery.value.trim()) {
         const query = searchQuery.value.toLowerCase().trim()
-        filtered = filtered.filter(item =>
-          item.name.includes(query)
-        )
+        filtered = filtered.filter(item => {
+          const visibleName = translateProductName(item.name).toLowerCase()
+          return visibleName.includes(query) || item.name.toLowerCase().includes(query)
+        })
       }
 
       // Sort by stock status: Low Stock first, then Adequate, then In Stock
@@ -265,7 +271,7 @@ export default {
   left: 0.75rem;
   width: 18px;
   height: 18px;
-  color: #94a3b8;
+  color: #475569;
   pointer-events: none;
 }
 
@@ -281,14 +287,12 @@ export default {
 }
 
 .search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
+  border-color: #1d4ed8;
   background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .search-input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .clear-search {
@@ -301,7 +305,7 @@ export default {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: #94a3b8;
+  color: #475569;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -324,7 +328,7 @@ export default {
 }
 
 .error {
-  color: #ef4444;
+  color: #b91c1c;
 }
 
 .clickable-row {

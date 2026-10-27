@@ -1,9 +1,10 @@
 <template>
-  <div class="profile-menu">
+  <div class="profile-menu" @focusout="handleFocusOut" @keydown.esc="isDropdownOpen = false">
     <button
+      type="button"
       class="profile-button"
+      :aria-expanded="isDropdownOpen"
       @click="toggleDropdown"
-      @blur="handleBlur"
     >
       <div class="avatar">
         {{ getInitials(currentUser.name) }}
@@ -35,8 +36,9 @@
       <div class="dropdown-divider"></div>
 
       <button
+        type="button"
         class="dropdown-item"
-        @mousedown.prevent="showProfileDetails"
+        @click="showProfileDetails"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M9 9C10.6569 9 12 7.65685 12 6C12 4.34315 10.6569 3 9 3C7.34315 3 6 4.34315 6 6C6 7.65685 7.34315 9 9 9Z" stroke="currentColor" stroke-width="1.5"/>
@@ -46,8 +48,9 @@
       </button>
 
       <button
+        type="button"
         class="dropdown-item"
-        @mousedown.prevent="showTasks"
+        @click="showTasks"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M15 3H3C2.44772 3 2 3.44772 2 4V14C2 14.5523 2.44772 15 3 15H15C15.5523 15 16 14.5523 16 14V4C16 3.44772 15.5523 3 15 3Z" stroke="currentColor" stroke-width="1.5"/>
@@ -60,8 +63,9 @@
       <div class="dropdown-divider"></div>
 
       <button
+        type="button"
         class="dropdown-item logout"
-        @mousedown.prevent="handleLogout"
+        @click="handleLogout"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M7 15H4C3.44772 15 3 14.5523 3 14V4C3 3.44772 3.44772 3 4 3H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -92,11 +96,11 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const handleBlur = () => {
-  // Delay to allow mousedown events on dropdown items to fire first
-  setTimeout(() => {
+const handleFocusOut = (event) => {
+  const next = event.relatedTarget
+  if (!next || !event.currentTarget.contains(next)) {
     isDropdownOpen.value = false
-  }, 200)
+  }
 }
 
 const showProfileDetails = () => {

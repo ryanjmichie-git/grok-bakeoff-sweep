@@ -2,11 +2,11 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen" class="modal-overlay" @click="close">
-        <div class="modal-container tasks-modal-container" @click.stop>
+        <div ref="dialogRef" class="modal-container tasks-modal-container" role="dialog" aria-modal="true" aria-labelledby="tasks-dialog-title" @click.stop>
           <div class="modal-header">
-            <h3 class="modal-title">{{ t('tasks.title') }}</h3>
-            <button class="close-button" @click="close">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <h3 id="tasks-dialog-title" class="modal-title">{{ t('tasks.title') }}</h3>
+            <button type="button" class="close-button" :aria-label="t('common.close')" @click="close">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="form-group-btn">
-                  <button @click="handleAddTask" class="task-add-btn" :disabled="!newTask.title.trim() || !newTask.dueDate">
+                  <button type="button" @click="handleAddTask" class="task-add-btn" :disabled="!newTask.title.trim() || !newTask.dueDate">
                     {{ t('tasks.addTask') }}
                   </button>
                 </div>
@@ -76,17 +76,18 @@
                 :class="[`priority-${task.priority}`, { completed: task.status === 'completed' }]"
               >
                 <div class="task-header">
-                  <div class="task-check-title">
+                  <label class="task-check-title">
                     <input
                       type="checkbox"
                       :checked="task.status === 'completed'"
                       @change="$emit('toggle-task', task.id)"
                       class="task-checkbox"
                     />
-                    <span class="task-title" @click="$emit('toggle-task', task.id)">{{ task.title }}</span>
-                  </div>
-                  <button @click="$emit('delete-task', task.id)" class="task-delete-btn" title="Delete task">
-                    ×
+                    <span class="task-title">{{ task.title }}</span>
+                  </label>
+                  <button type="button" class="task-delete-btn" @click="$emit('delete-task', task.id)">
+                    <span aria-hidden="true">×</span>
+                    <span class="sr-only">{{ t('tasks.deleteTask') }}</span>
                   </button>
                 </div>
 
@@ -110,7 +111,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">{{ t('profileDetails.close') }}</button>
+            <button type="button" class="btn-secondary" @click="close">{{ t('profileDetails.close') }}</button>
           </div>
         </div>
       </div>
@@ -119,8 +120,9 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { useI18n } from '../composables/useI18n'
+import { useDialog } from '../composables/useDialog'
 
 export default {
   name: 'TasksModal',
@@ -151,6 +153,9 @@ export default {
     const close = () => {
       emit('close')
     }
+
+    const dialogRef = ref(null)
+    useDialog(toRef(props, 'isOpen'), dialogRef, close)
 
     const handleAddTask = () => {
       if (newTask.value.title.trim() && newTask.value.dueDate) {
@@ -234,6 +239,7 @@ export default {
       newTask,
       sortedTasks,
       close,
+      dialogRef,
       handleAddTask,
       formatDueDate,
       getStatusClass,
@@ -387,8 +393,7 @@ label {
 
 .task-input:focus,
 .task-select:focus {
-  outline: none;
-  border-color: #667eea;
+  border-color: #1d4ed8;
 }
 
 .task-select {
@@ -502,13 +507,13 @@ label {
 
 .task-item.completed .task-title {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: #475569;
 }
 
 .task-delete-btn {
   width: 28px;
   height: 28px;
-  background: #ef4444;
+  background: #b91c1c;
   color: white;
   border: none;
   border-radius: 6px;
@@ -567,7 +572,7 @@ label {
 }
 
 .task-due-date svg {
-  color: #94a3b8;
+  color: #475569;
 }
 
 .status-badge {

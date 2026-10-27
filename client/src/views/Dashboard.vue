@@ -83,21 +83,21 @@
           <div class="chart-content">
             <div class="order-health-container">
               <!-- Left: Donut Chart -->
-              <div class="order-health-chart">
-                <svg viewBox="0 0 200 200" class="donut-svg-compact">
+              <div class="order-health-chart" role="group" :aria-label="orderHealthChartLabel">
+                <svg viewBox="0 0 200 200" class="donut-svg-compact" aria-hidden="true" focusable="false">
                   <circle cx="100" cy="100" r="65" fill="none" stroke="#e2e8f0" stroke-width="25"/>
-                  <circle cx="100" cy="100" r="65" fill="none" stroke="#10b981" stroke-width="25"
+                  <circle cx="100" cy="100" r="65" fill="none" stroke="#047857" stroke-width="25"
                     :stroke-dasharray="`${getCircleSegment(statusData.delivered)} 408`"
                     stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
-                  <circle cx="100" cy="100" r="65" fill="none" stroke="#3b82f6" stroke-width="25"
+                  <circle cx="100" cy="100" r="65" fill="none" stroke="#1d4ed8" stroke-width="25"
                     :stroke-dasharray="`${getCircleSegment(statusData.shipped)} 408`"
                     :stroke-dashoffset="`-${getCircleSegment(statusData.delivered)}`"
                     transform="rotate(-90 100 100)"/>
-                  <circle cx="100" cy="100" r="65" fill="none" stroke="#f59e0b" stroke-width="25"
+                  <circle cx="100" cy="100" r="65" fill="none" stroke="#b45309" stroke-width="25"
                     :stroke-dasharray="`${getCircleSegment(statusData.processing)} 408`"
                     :stroke-dashoffset="`-${getCircleSegment(statusData.delivered) + getCircleSegment(statusData.shipped)}`"
                     transform="rotate(-90 100 100)"/>
-                  <circle cx="100" cy="100" r="65" fill="none" stroke="#ef4444" stroke-width="25"
+                  <circle cx="100" cy="100" r="65" fill="none" stroke="#b91c1c" stroke-width="25"
                     :stroke-dasharray="`${getCircleSegment(statusData.backordered)} 408`"
                     :stroke-dashoffset="`-${getCircleSegment(statusData.delivered) + getCircleSegment(statusData.shipped) + getCircleSegment(statusData.processing)}`"
                     transform="rotate(-90 100 100)"/>
@@ -105,10 +105,10 @@
                   <text x="100" y="120" text-anchor="middle" class="donut-center-value">{{ orderHealthMetrics.totalOrders }}</text>
                 </svg>
                 <div class="donut-legend-compact">
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #10b981"></span>{{ t('status.delivered') }}</div>
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #3b82f6"></span>{{ t('status.shipped') }}</div>
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #f59e0b"></span>{{ t('status.processing') }}</div>
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #ef4444"></span>{{ t('status.backordered') }}</div>
+                  <div class="legend-item-compact"><span class="legend-dot delivered"></span>{{ t('status.delivered') }} ({{ statusData.delivered }})</div>
+                  <div class="legend-item-compact"><span class="legend-dot shipped"></span>{{ t('status.shipped') }} ({{ statusData.shipped }})</div>
+                  <div class="legend-item-compact"><span class="legend-dot processing"></span>{{ t('status.processing') }} ({{ statusData.processing }})</div>
+                  <div class="legend-item-compact"><span class="legend-dot backordered"></span>{{ t('status.backordered') }} ({{ statusData.backordered }})</div>
                 </div>
               </div>
 
@@ -126,6 +126,7 @@
                   <div class="health-metric-label">{{ t('dashboard.orderHealth.onTimeRate') }}</div>
                   <div class="health-metric-value" :class="{ 'metric-good': orderHealthMetrics.onTimeRate >= 90, 'metric-warning': orderHealthMetrics.onTimeRate < 90 && orderHealthMetrics.onTimeRate >= 75, 'metric-bad': orderHealthMetrics.onTimeRate < 75 }">
                     {{ orderHealthMetrics.onTimeRate.toFixed(1) }}%
+                    <span class="health-metric-status">{{ onTimeLabel }}</span>
                   </div>
                 </div>
                 <div class="health-metric">
@@ -147,10 +148,9 @@
               <div v-for="cat in categoryData" :key="cat.name" class="h-bar-item">
                 <div class="h-bar-label">{{ translateCategory(cat.name) }}</div>
                 <div class="h-bar-container">
-                  <div class="h-bar" :style="{ width: (cat.value / maxCategoryValue * 100) + '%', background: cat.color }">
-                    <span class="h-bar-value">{{ selectedCurrency === 'JPY' ? formatCurrency(cat.value, selectedCurrency) : `$${(cat.value / 1000).toFixed(1)}K` }}</span>
-                  </div>
+                  <div class="h-bar" :style="{ width: (cat.value / maxCategoryValue * 100) + '%', background: cat.color }"></div>
                 </div>
+                <span class="h-bar-value">{{ selectedCurrency === 'JPY' ? formatCurrency(cat.value, selectedCurrency) : `$${(cat.value / 1000).toFixed(1)}K` }}</span>
               </div>
             </div>
             <div v-else class="no-data">{{ t('dashboard.inventoryShortages.noData') }}</div>
@@ -188,7 +188,7 @@
                   v-for="item in backlogItems"
                   :key="item.id"
                 >
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;"><strong>{{ item.order_id }}</strong></td>
+                  <td><button type="button" class="text-button order-link" @click="showBacklogDetail(item)"><strong>{{ item.order_id }}</strong></button></td>
                   <td @click="showBacklogDetail(item)" style="cursor: pointer;"><strong>{{ item.item_sku }}</strong></td>
                   <td @click="showBacklogDetail(item)" style="cursor: pointer;">{{ translateProductName(item.item_name) }}</td>
                   <td @click="showBacklogDetail(item)" style="cursor: pointer;">{{ item.quantity_needed }}</td>
@@ -199,8 +199,9 @@
                     </span>
                   </td>
                   <td @click="showBacklogDetail(item)" style="cursor: pointer;">
-                    <span :style="{ color: item.days_delayed > 7 ? '#ef4444' : '#f59e0b', fontWeight: 600 }">
+                    <span :class="item.days_delayed > 7 ? 'delay-long' : 'delay-short'">
                       {{ item.days_delayed }} {{ t('dashboard.inventoryShortages.days') }}
+                      ({{ item.days_delayed > 7 ? t('dashboard.inventoryShortages.longDelay') : t('dashboard.inventoryShortages.shortDelay') }})
                     </span>
                   </td>
                   <td @click="showBacklogDetail(item)" style="cursor: pointer;">
@@ -211,6 +212,7 @@
                   <td>
                     <button
                       v-if="!item.purchase_order_id"
+                      type="button"
                       @click.stop="openPOModal(item)"
                       class="po-button create"
                     >
@@ -218,6 +220,7 @@
                     </button>
                     <button
                       v-else
+                      type="button"
                       @click.stop="viewPO(item)"
                       class="po-button view"
                     >
@@ -255,7 +258,7 @@
                   class="clickable-row"
                   @click="showProductDetail(item)"
                 >
-                  <td><strong>{{ translateProductName(item.name) }}</strong></td>
+                  <td><button type="button" class="text-button" @click="showProductDetail(item)"><strong>{{ translateProductName(item.name) }}</strong></button></td>
                   <td>{{ item.sku }}</td>
                   <td>{{ translateCategory(item.category) }}</td>
                   <td>{{ item.unitsOrdered }}</td>
@@ -378,7 +381,7 @@ export default {
         }
         return false
       }).length
-      const onTimeRate = totalOrders > 0 ? (onTimeDeliveries / totalOrders) * 100 : 0
+      const onTimeRate = deliveredOrders.length > 0 ? (onTimeDeliveries / deliveredOrders.length) * 100 : 0
 
       // Calculate average fulfillment speed (days from order to delivery for delivered orders)
       let totalDays = 0
@@ -401,6 +404,24 @@ export default {
         onTimeRate,
         avgFulfillmentDays
       }
+    })
+
+    const onTimeLabel = computed(() => {
+      const rate = orderHealthMetrics.value.onTimeRate
+      if (rate >= 90) return t('reports.fulfillment.good')
+      if (rate >= 75) return t('reports.fulfillment.fair')
+      return t('reports.fulfillment.low')
+    })
+
+    const orderHealthChartLabel = computed(() => {
+      const counts = statusData.value
+      return [
+        `${t('dashboard.orderHealth.total')} ${orderHealthMetrics.value.totalOrders}`,
+        `${t('status.delivered')} ${counts.delivered}`,
+        `${t('status.shipped')} ${counts.shipped}`,
+        `${t('status.processing')} ${counts.processing}`,
+        `${t('status.backordered')} ${counts.backordered}`
+      ].join(', ')
     })
 
     const categoryData = computed(() => {
@@ -688,6 +709,8 @@ export default {
       fillRate,
       statusData,
       orderHealthMetrics,
+      onTimeLabel,
+      orderHealthChartLabel,
       categoryData,
       maxCategoryValue,
       orderTrendData,
@@ -928,10 +951,18 @@ export default {
 
 .health-metric-label {
   font-size: 0.688rem;
-  color: #cbd5e1;
+  color: #475569;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.health-metric-status {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .health-metric-value {
@@ -942,15 +973,35 @@ export default {
 }
 
 .metric-good {
-  color: #10b981;
+  color: #047857;
 }
 
 .metric-warning {
-  color: #f59e0b;
+  color: #b45309;
 }
 
 .metric-bad {
-  color: #ef4444;
+  color: #b91c1c;
+}
+
+.legend-dot.delivered { background: #047857; }
+.legend-dot.shipped { background: #1d4ed8; }
+.legend-dot.processing { background: #b45309; }
+.legend-dot.backordered { background: #b91c1c; }
+
+.delay-long {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.delay-short {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.order-link {
+  color: #1d4ed8;
+  font-weight: 700;
 }
 
 .horizontal-bar-chart {
@@ -995,7 +1046,8 @@ export default {
 .h-bar-value {
   font-size: 0.813rem;
   font-weight: 700;
-  color: white;
+  color: #0f172a;
+  flex-shrink: 0;
 }
 
 .line-chart {
@@ -1010,7 +1062,7 @@ export default {
   justify-content: space-between;
   padding-right: 1rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #475569;
   border-right: 1px solid #e2e8f0;
 }
 
@@ -1077,7 +1129,7 @@ export default {
 .no-data {
   padding: 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.875rem;
 }
 
@@ -1093,12 +1145,12 @@ export default {
 .success-icon {
   width: 48px;
   height: 48px;
-  color: #10b981;
+  color: #047857;
 }
 
 .no-backlog-text {
   font-size: 1.125rem;
-  color: #10b981;
+  color: #047857;
   font-weight: 600;
   margin: 0;
 }
@@ -1137,8 +1189,7 @@ export default {
 }
 
 .task-input:focus {
-  outline: none;
-  border-color: #667eea;
+  border-color: #1d4ed8;
 }
 
 .task-add-btn {
@@ -1196,7 +1247,7 @@ export default {
 
 .task-item.completed .task-text {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: #475569;
 }
 
 .task-checkbox {
@@ -1217,7 +1268,7 @@ export default {
 .task-delete-btn {
   width: 28px;
   height: 28px;
-  background: #ef4444;
+  background: #b91c1c;
   color: white;
   border: none;
   border-radius: 6px;
@@ -1248,7 +1299,7 @@ export default {
 }
 
 .po-button.create {
-  background: #3b82f6;
+  background: #1d4ed8;
   color: white;
 }
 

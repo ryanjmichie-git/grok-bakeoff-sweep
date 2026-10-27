@@ -38,14 +38,14 @@
           <table>
             <thead>
               <tr>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.orderId') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.sku') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.itemName') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.quantityNeeded') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.quantityAvailable') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.shortage') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.daysDelayed') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.priority') }}</td>
+                <th scope="col">{{ t('dashboard.inventoryShortages.orderId') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.sku') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.itemName') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.quantityNeeded') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.quantityAvailable') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.shortage') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.daysDelayed') }}</th>
+                <th scope="col">{{ t('dashboard.inventoryShortages.priority') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -63,6 +63,7 @@
                 <td>
                   <span :class="item.days_delayed > 7 ? 'delay-long' : 'delay-short'">
                     {{ item.days_delayed }} {{ t('dashboard.inventoryShortages.days') }}
+                    ({{ item.days_delayed > 7 ? t('dashboard.inventoryShortages.longDelay') : t('dashboard.inventoryShortages.shortDelay') }})
                   </span>
                 </td>
                 <td>
@@ -133,7 +134,7 @@ export default {
     }
 
     const getBacklogByPriority = (priority) => {
-      return backlogItems.value.filter(item => priority === 'high' ? item.priority !== 'low' : item.priority === priority)
+      return backlogItems.value.filter(item => item.priority === priority)
     }
 
     const translatePriority = (priority) => {
@@ -177,7 +178,7 @@ export default {
 }
 
 .delay-long {
-  color: #dc2626;
+  color: #b91c1c;
   font-weight: 600;
 }
 

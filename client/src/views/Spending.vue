@@ -56,8 +56,12 @@
             <div class="chart-area">
               <div v-for="month in monthlyRevenue" :key="month.month" class="bar-group-revenue">
                 <div class="revenue-bars">
-                  <div class="revenue-bar" :style="{ height: getRevenueBarHeight(month.revenue) + '%' }" :title="`Revenue: ${currencySymbol}${month.revenue.toLocaleString()}`"></div>
-                  <div class="cost-bar" :style="{ height: getRevenueBarHeight(month.costs) + '%' }" :title="`Costs: ${currencySymbol}${month.costs.toLocaleString()}`"></div>
+                  <div class="revenue-bar" :style="{ height: getRevenueBarHeight(month.revenue) + '%' }" :title="`${t('finance.revenueVsCosts.revenue')}: ${currencySymbol}${month.revenue.toLocaleString()}`">
+                    <span class="sr-only">{{ t('finance.revenueVsCosts.revenue') }} {{ currencySymbol }}{{ month.revenue.toLocaleString() }}</span>
+                  </div>
+                  <div class="cost-bar" :style="{ height: getRevenueBarHeight(month.costs) + '%' }" :title="`${t('finance.revenueVsCosts.costs')}: ${currencySymbol}${month.costs.toLocaleString()}`">
+                    <span class="sr-only">{{ t('finance.revenueVsCosts.costs') }} {{ currencySymbol }}{{ month.costs.toLocaleString() }}</span>
+                  </div>
                 </div>
                 <span class="bar-label">{{ translateMonth(month.month) }}</span>
               </div>
@@ -89,12 +93,21 @@
             </div>
             <div class="chart-area">
               <div v-for="month in monthlySpending" :key="month.month" class="bar-group">
-                <div class="stacked-bar" @click="showCostDetail(month)">
-                  <div class="bar-segment procurement" :style="{ height: getBarHeight(month.procurement) + '%' }" :title="`Procurement: ${currencySymbol}${month.procurement.toLocaleString()}`"></div>
-                  <div class="bar-segment operational" :style="{ height: getBarHeight(month.operational) + '%' }" :title="`Operational: ${currencySymbol}${month.operational.toLocaleString()}`"></div>
-                  <div class="bar-segment labor" :style="{ height: getBarHeight(month.labor) + '%' }" :title="`Labor: ${currencySymbol}${month.labor.toLocaleString()}`"></div>
-                  <div class="bar-segment overhead" :style="{ height: getBarHeight(month.overhead) + '%' }" :title="`Overhead: ${currencySymbol}${month.overhead.toLocaleString()}`"></div>
-                </div>
+                <button type="button" class="stacked-bar" @click="showCostDetail(month)">
+                  <span class="sr-only">{{ translateMonth(month.month) }}</span>
+                  <span class="bar-segment procurement" :style="{ height: getBarHeight(month.procurement) + '%' }" :title="`${t('finance.monthlyCostFlow.procurement')}: ${currencySymbol}${month.procurement.toLocaleString()}`">
+                    <span class="sr-only">{{ t('finance.monthlyCostFlow.procurement') }} {{ currencySymbol }}{{ month.procurement.toLocaleString() }}</span>
+                  </span>
+                  <span class="bar-segment operational" :style="{ height: getBarHeight(month.operational) + '%' }" :title="`${t('finance.monthlyCostFlow.operational')}: ${currencySymbol}${month.operational.toLocaleString()}`">
+                    <span class="sr-only">{{ t('finance.monthlyCostFlow.operational') }} {{ currencySymbol }}{{ month.operational.toLocaleString() }}</span>
+                  </span>
+                  <span class="bar-segment labor" :style="{ height: getBarHeight(month.labor) + '%' }" :title="`${t('finance.monthlyCostFlow.labor')}: ${currencySymbol}${month.labor.toLocaleString()}`">
+                    <span class="sr-only">{{ t('finance.monthlyCostFlow.labor') }} {{ currencySymbol }}{{ month.labor.toLocaleString() }}</span>
+                  </span>
+                  <span class="bar-segment overhead" :style="{ height: getBarHeight(month.overhead) + '%' }" :title="`${t('finance.monthlyCostFlow.overhead')}: ${currencySymbol}${month.overhead.toLocaleString()}`">
+                    <span class="sr-only">{{ t('finance.monthlyCostFlow.overhead') }} {{ currencySymbol }}{{ month.overhead.toLocaleString() }}</span>
+                  </span>
+                </button>
                 <span class="bar-label">{{ translateMonth(month.month) }}</span>
               </div>
             </div>
@@ -120,7 +133,7 @@
               <div class="category-meta">
                 <span class="percentage">{{ category.percentage }}% {{ t('finance.categorySpending.ofTotal') }}</span>
                 <span class="change" :class="{ positive: category.change > 0, negative: category.change < 0 }">
-                  {{ Math.abs(category.change) }}%
+                  {{ category.change > 0 ? '+' : category.change < 0 ? '-' : '' }}{{ Math.abs(category.change) }}%
                 </span>
               </div>
             </div>
@@ -150,7 +163,11 @@
                   class="clickable-row"
                   @click="handleTransactionClick(transaction)"
                 >
-                  <td class="transaction-id">{{ transaction.id.toString().padStart(3, '0') }}</td>
+                  <td class="transaction-id">
+                    <button type="button" class="text-button" @click.stop="handleTransactionClick(transaction)">
+                      {{ transaction.id.toString().padStart(3, '0') }}
+                    </button>
+                  </td>
                   <td class="transaction-description">{{ transaction.description }}</td>
                   <td class="transaction-vendor">{{ transaction.vendor }}</td>
                   <td class="transaction-date">{{ formatDateShort(transaction.date) }}</td>
@@ -305,7 +322,7 @@ export default {
     // Profit margin percentage
     const profitMargin = computed(() => {
       if (revenueMetrics.value.totalRevenue === 0) return 0
-      return ((netProfit.value / totalCosts.value) * 100).toFixed(1)
+      return ((netProfit.value / revenueMetrics.value.totalRevenue) * 100).toFixed(1)
     })
 
     // Monthly revenue data for chart
@@ -501,7 +518,7 @@ export default {
 }
 
 .stat-change.positive {
-  color: #059669;
+  color: #047857;
 }
 
 .stat-change.negative {
@@ -536,12 +553,20 @@ export default {
   border-radius: 3px;
 }
 
-.legend-dot.procurement { background: #3b82f6; }
-.legend-dot.operational { background: #8b5cf6; }
-.legend-dot.labor { background: #10b981; }
-.legend-dot.overhead { background: #f59e0b; }
+.legend-dot.procurement { background: #1d4ed8; }
+.legend-dot.operational {
+  background: repeating-linear-gradient(90deg, #6d28d9, #6d28d9 3px, #ddd6fe 3px, #ddd6fe 5px);
+}
+.legend-dot.labor {
+  background: repeating-linear-gradient(0deg, #047857, #047857 3px, #a7f3d0 3px, #a7f3d0 5px);
+}
+.legend-dot.overhead {
+  background: repeating-linear-gradient(45deg, #b45309, #b45309 3px, #fde68a 3px, #fde68a 5px);
+}
 .legend-dot.revenue-color { background: #0f172a; }
-.legend-dot.cost-color { background: #ef4444; }
+.legend-dot.cost-color {
+  background: repeating-linear-gradient(-45deg, #b91c1c, #b91c1c 3px, #fecaca 3px, #fecaca 5px);
+}
 
 .stats-grid-finance {
   display: grid;
@@ -601,7 +626,7 @@ export default {
 }
 
 .cost-bar {
-  background: #ef4444;
+  background: repeating-linear-gradient(-45deg, #b91c1c, #b91c1c 4px, #fecaca 4px, #fecaca 8px);
 }
 
 .revenue-bar:hover, .cost-bar:hover {
@@ -625,7 +650,7 @@ export default {
   justify-content: space-between;
   padding-right: 1rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #475569;
   border-right: 1px solid #e2e8f0;
 }
 
@@ -652,9 +677,13 @@ export default {
   flex-direction: column-reverse;
   align-items: stretch;
   height: 100%;
-  padding-bottom: 2rem;
+  padding: 0 0 2rem;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
 }
 
 .stacked-bar:hover {
@@ -668,18 +697,24 @@ export default {
   display: block;
 }
 
-.bar-segment:first-child {
+.bar-segment.procurement {
   border-radius: 0 0 6px 6px;
 }
 
-.bar-segment:last-child {
+.bar-segment.overhead {
   border-radius: 6px 6px 0 0;
 }
 
-.bar-segment.procurement { background: #3b82f6; }
-.bar-segment.operational { background: #8b5cf6; }
-.bar-segment.labor { background: #10b981; }
-.bar-segment.overhead { background: #f59e0b; }
+.bar-segment.procurement { background: #1d4ed8; }
+.bar-segment.operational {
+  background: repeating-linear-gradient(90deg, #6d28d9, #6d28d9 4px, #ddd6fe 4px, #ddd6fe 8px);
+}
+.bar-segment.labor {
+  background: repeating-linear-gradient(0deg, #047857, #047857 4px, #a7f3d0 4px, #a7f3d0 8px);
+}
+.bar-segment.overhead {
+  background: repeating-linear-gradient(45deg, #b45309, #b45309 4px, #fde68a 4px, #fde68a 8px);
+}
 
 .bar-segment:hover {
   opacity: 0.8;
@@ -757,7 +792,7 @@ export default {
 }
 
 .change.positive {
-  color: #059669;
+  color: #047857;
 }
 
 .change.negative {
