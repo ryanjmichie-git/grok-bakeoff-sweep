@@ -96,7 +96,7 @@
                   </span>
                 </td>
                 <td>
-                  <span :class="['badge', forecast.trend]"></span>
+                  <span :class="['badge', forecast.trend]">{{ t('trends.' + forecast.trend) }}</span>
                 </td>
                 <td>{{ translatePeriod(forecast.period) }}</td>
               </tr>
@@ -169,7 +169,7 @@ export default {
     }
 
     const getChangePercent = (forecast) => {
-      const change = ((forecast.current_demand - forecast.forecasted_demand) / forecast.current_demand * 100).toFixed(1)
+      const change = ((forecast.forecasted_demand - forecast.current_demand) / forecast.current_demand * 100).toFixed(1)
       return change > 0 ? `+${change}` : change
     }
 

@@ -38,14 +38,14 @@
           <table>
             <thead>
               <tr>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.orderId') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.sku') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.itemName') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.quantityNeeded') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.quantityAvailable') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.shortage') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.daysDelayed') }}</td>
-                <td class="col-head" style="font-weight: 600">{{ t('dashboard.inventoryShortages.priority') }}</td>
+                <th>{{ t('dashboard.inventoryShortages.orderId') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.sku') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.itemName') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.quantityNeeded') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.quantityAvailable') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.shortage') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.daysDelayed') }}</th>
+                <th>{{ t('dashboard.inventoryShortages.priority') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +133,7 @@ export default {
     }
 
     const getBacklogByPriority = (priority) => {
-      return backlogItems.value.filter(item => priority === 'high' ? item.priority !== 'low' : item.priority === priority)
+      return backlogItems.value.filter(item => item.priority === priority)
     }
 
     const translatePriority = (priority) => {
