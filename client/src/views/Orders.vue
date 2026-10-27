@@ -50,7 +50,7 @@
                 <td class="col-customer">{{ translateCustomerName(order.customer) }}</td>
                 <td class="col-items">
                   <div class="items-details">
-                    <div class="items-summary" @click="toggleItems(order.id)">
+                    <div class="items-summary" @click="toggleItems(order.id)" role="button" tabindex="0" @keydown.enter="toggleItems(order.id)" @keydown.space.prevent="toggleItems(order.id)">
                       {{ t('orders.itemsCount', { count: order.items.length }) }}
                     </div>
                     <div v-if="openItems[order.id]" class="items-dropdown">
@@ -157,11 +157,11 @@ export default {
         const filters = getCurrentFilters()
         const fetchedOrders = await api.getOrders(filters)
 
-        // Sort orders by order_date (earliest first)
+        // Sort orders by order_date (oldest first)
         orders.value = fetchedOrders.sort((a, b) => {
           const dateA = new Date(a.order_date)
           const dateB = new Date(b.order_date)
-          return dateB - dateA
+          return dateA - dateB
         })
       } catch (err) {
         error.value = 'Failed to load orders: ' + err.message
@@ -310,6 +310,11 @@ export default {
 .items-summary:hover {
   color: #2563eb;
   text-decoration: underline;
+}
+
+.items-summary:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
 /* Dropdown container */
