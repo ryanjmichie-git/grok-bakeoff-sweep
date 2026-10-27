@@ -2,11 +2,19 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen && inventoryItem" class="modal-overlay" @click="close">
-        <div class="modal-container" @click.stop>
+        <div
+          ref="dialogRef"
+          class="modal-container"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="inventory-detail-title"
+          tabindex="-1"
+          @click.stop
+        >
           <div class="modal-header">
-            <h3 class="modal-title">Inventory Item Details</h3>
-            <button class="close-button" @click="close">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <h3 id="inventory-detail-title" class="modal-title">Inventory Item Details</h3>
+            <button type="button" class="close-button" :aria-label="t('common.close')" @click="close">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
@@ -15,7 +23,7 @@
           <div class="modal-body">
             <div class="item-header">
               <div class="item-icon" :class="getStockIconClass()">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                   <rect x="8" y="12" width="32" height="28" rx="2" stroke="currentColor" stroke-width="2.5"/>
                   <path d="M16 8V16M32 8V16M8 20H40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                   <path d="M16 28H32M16 34H24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -61,7 +69,7 @@
               <div class="info-item">
                 <div class="info-label">Units Remaining</div>
                 <div class="info-value">
-                  <span :style="{ color: inventoryItem.quantity_on_hand <= inventoryItem.reorder_point ? '#ef4444' : '#10b981' }">
+                  <span :class="inventoryItem.quantity_on_hand <= inventoryItem.reorder_point ? 'units-short' : 'units-ok'">
                     {{ inventoryItem.quantity_on_hand - inventoryItem.reorder_point }} units
                   </span>
                 </div>
@@ -96,7 +104,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button type="button" class="btn-secondary" @click="close">{{ t('common.close') }}</button>
           </div>
         </div>
       </div>
@@ -105,10 +113,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useI18n } from '../composables/useI18n'
 
-const { currentCurrency, translateProductName, translateWarehouse } = useI18n()
+const { t, currentCurrency, translateProductName, translateWarehouse } = useI18n()
 
 const currencySymbol = computed(() => {
   return currentCurrency.value === 'JPY' ? '¥' : '$'
@@ -127,6 +135,64 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+const dialogRef = ref(null)
+let previouslyFocused = null
+
+const close = () => {
+  emit('close')
+}
+
+const handleDialogKeydown = (event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    close()
+    return
+  }
+  if (event.key !== 'Tab' || !dialogRef.value) return
+
+  const focusable = Array.from(
+    dialogRef.value.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+  ).filter((el) => !el.disabled)
+  if (focusable.length === 0) {
+    event.preventDefault()
+    return
+  }
+
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  const active = document.activeElement
+  const inside = active instanceof Node && dialogRef.value.contains(active)
+  const onDialog = active === dialogRef.value
+
+  if (event.shiftKey && (active === first || onDialog || !inside)) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && (active === last || !inside)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(() => props.isOpen, async (open) => {
+  document.removeEventListener('keydown', handleDialogKeydown)
+  if (!open) {
+    const restore = previouslyFocused
+    previouslyFocused = null
+    restore?.focus()
+    return
+  }
+
+  previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  document.addEventListener('keydown', handleDialogKeydown)
+  await nextTick()
+  if (!props.isOpen || !dialogRef.value) return
+  dialogRef.value.focus()
+}, { flush: 'post' })
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleDialogKeydown)
+})
+
 const totalValue = computed(() => {
   if (!props.inventoryItem) return 0
   return props.inventoryItem.quantity_on_hand * props.inventoryItem.unit_cost
@@ -136,10 +202,6 @@ const stockPercentage = computed(() => {
   if (!props.inventoryItem || props.inventoryItem.reorder_point === 0) return 0
   return Math.round((props.inventoryItem.quantity_on_hand / props.inventoryItem.reorder_point) * 100)
 })
-
-const close = () => {
-  emit('close')
-}
 
 const getStockStatus = () => {
   if (!props.inventoryItem) return 'Unknown'
@@ -201,6 +263,12 @@ const getSummaryCardClass = () => {
   flex-direction: column;
 }
 
+.modal-container:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px #2563eb, 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -234,6 +302,12 @@ const getSummaryCardClass = () => {
   color: #0f172a;
 }
 
+.close-button:focus,
+.close-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -261,15 +335,15 @@ const getSummaryCardClass = () => {
 }
 
 .item-icon.success-icon {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
 }
 
 .item-icon.warning-icon {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
 }
 
 .item-icon.danger-icon {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
 }
 
 .item-title-section {
@@ -286,7 +360,7 @@ const getSummaryCardClass = () => {
 
 .item-sku {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #475569;
   font-family: 'Monaco', 'Courier New', monospace;
 }
 
@@ -353,7 +427,7 @@ const getSummaryCardClass = () => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #334155;
   margin-bottom: 0.5rem;
 }
 
@@ -365,7 +439,7 @@ const getSummaryCardClass = () => {
 
 .summary-subtitle {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #334155;
   margin-top: 0.25rem;
 }
 
@@ -386,7 +460,7 @@ const getSummaryCardClass = () => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #334155;
 }
 
 .info-value {
@@ -425,6 +499,20 @@ const getSummaryCardClass = () => {
 .btn-secondary:hover {
   background: #e2e8f0;
   border-color: #cbd5e1;
+}
+
+.btn-secondary:focus,
+.btn-secondary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.units-short {
+  color: #991b1b;
+}
+
+.units-ok {
+  color: #047857;
 }
 
 /* Modal transition animations */

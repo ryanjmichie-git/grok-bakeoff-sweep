@@ -2,11 +2,25 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen && backlogItem" class="modal-overlay" @click="close">
-        <div class="modal-container" @click.stop>
+        <div
+          ref="dialogRef"
+          class="modal-container"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="backlog-detail-title"
+          tabindex="-1"
+          @click.stop
+        >
           <div class="modal-header">
-            <h3 class="modal-title">Inventory Shortage Details</h3>
-            <button class="close-button" @click="close">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <h3 id="backlog-detail-title" class="modal-title">Inventory Shortage Details</h3>
+            <button
+              ref="closeButtonRef"
+              type="button"
+              class="close-button"
+              :aria-label="t('common.close')"
+              @click="close"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
@@ -15,7 +29,7 @@
           <div class="modal-body">
             <div class="shortage-header">
               <div class="shortage-icon">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">
                   <path d="M24 8L24 28M24 34L24 36" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
                   <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="3"/>
                 </svg>
@@ -76,7 +90,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button type="button" class="btn-secondary" @click="close">Close</button>
           </div>
         </div>
       </div>
@@ -85,10 +99,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from '../composables/useI18n'
 
-const { translateProductName } = useI18n()
+const { translateProductName, t } = useI18n()
 
 const props = defineProps({
   isOpen: {
@@ -103,6 +117,10 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+const dialogRef = ref(null)
+const closeButtonRef = ref(null)
+let previouslyFocused = null
+
 const shortage = computed(() => {
   if (!props.backlogItem) return 0
   return props.backlogItem.quantity_needed - props.backlogItem.quantity_available
@@ -111,6 +129,56 @@ const shortage = computed(() => {
 const close = () => {
   emit('close')
 }
+
+const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+const onDialogKeydown = (event) => {
+  if (!props.isOpen) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    close()
+    return
+  }
+  if (event.key !== 'Tab') return
+  const root = dialogRef.value
+  if (!root) return
+  const focusable = [...root.querySelectorAll(focusableSelector)].filter((el) => !el.disabled)
+  if (focusable.length === 0) {
+    event.preventDefault()
+    return
+  }
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  const active = document.activeElement
+  if (event.shiftKey) {
+    if (active === first || !root.contains(active)) {
+      event.preventDefault()
+      last.focus()
+    }
+  } else if (active === last || !root.contains(active)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(() => props.isOpen, async (open) => {
+  if (open) {
+    previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.addEventListener('keydown', onDialogKeydown)
+    await nextTick()
+    if (!props.isOpen) return
+    closeButtonRef.value?.focus()
+  } else {
+    document.removeEventListener('keydown', onDialogKeydown)
+    const restore = previouslyFocused
+    previouslyFocused = null
+    restore?.focus()
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onDialogKeydown)
+})
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -181,6 +249,12 @@ const formatDate = (dateString) => {
 .close-button:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.close-button:focus,
+.close-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 .modal-body {
@@ -281,7 +355,7 @@ const formatDate = (dateString) => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #475569;
   margin-bottom: 0.5rem;
 }
 
@@ -292,11 +366,11 @@ const formatDate = (dateString) => {
 }
 
 .summary-card.danger .summary-value {
-  color: #dc2626;
+  color: #b91c1c;
 }
 
 .summary-card.warning .summary-value {
-  color: #f59e0b;
+  color: #92400e;
 }
 
 .info-grid {
@@ -355,6 +429,12 @@ const formatDate = (dateString) => {
 .btn-secondary:hover {
   background: #e2e8f0;
   border-color: #cbd5e1;
+}
+
+.btn-secondary:focus,
+.btn-secondary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 /* Modal transition animations */

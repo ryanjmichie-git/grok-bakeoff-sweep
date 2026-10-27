@@ -54,7 +54,13 @@
               <span>{{ currencySymbol }}0</span>
             </div>
             <div class="chart-area">
-              <div v-for="month in monthlyRevenue" :key="month.month" class="bar-group-revenue">
+              <div
+                v-for="month in monthlyRevenue"
+                :key="month.month"
+                class="bar-group-revenue"
+                role="img"
+                :aria-label="revenueBarLabel(month)"
+              >
                 <div class="revenue-bars">
                   <div class="revenue-bar" :style="{ height: getRevenueBarHeight(month.revenue) + '%' }" :title="`Revenue: ${currencySymbol}${month.revenue.toLocaleString()}`"></div>
                   <div class="cost-bar" :style="{ height: getRevenueBarHeight(month.costs) + '%' }" :title="`Costs: ${currencySymbol}${month.costs.toLocaleString()}`"></div>
@@ -89,11 +95,20 @@
             </div>
             <div class="chart-area">
               <div v-for="month in monthlySpending" :key="month.month" class="bar-group">
-                <div class="stacked-bar" @click="showCostDetail(month)">
-                  <div class="bar-segment procurement" :style="{ height: getBarHeight(month.procurement) + '%' }" :title="`Procurement: ${currencySymbol}${month.procurement.toLocaleString()}`"></div>
-                  <div class="bar-segment operational" :style="{ height: getBarHeight(month.operational) + '%' }" :title="`Operational: ${currencySymbol}${month.operational.toLocaleString()}`"></div>
-                  <div class="bar-segment labor" :style="{ height: getBarHeight(month.labor) + '%' }" :title="`Labor: ${currencySymbol}${month.labor.toLocaleString()}`"></div>
-                  <div class="bar-segment overhead" :style="{ height: getBarHeight(month.overhead) + '%' }" :title="`Overhead: ${currencySymbol}${month.overhead.toLocaleString()}`"></div>
+                <div
+                  class="stacked-bar"
+                  role="button"
+                  tabindex="0"
+                  :aria-label="costBarLabel(month)"
+                  aria-haspopup="dialog"
+                  @click="showCostDetail(month)"
+                  @keydown.enter.prevent="showCostDetail(month)"
+                  @keydown.space.prevent="showCostDetail(month)"
+                >
+                  <div class="bar-segment procurement" aria-hidden="true" :style="{ height: getBarHeight(month.procurement) + '%' }" :title="`Procurement: ${currencySymbol}${month.procurement.toLocaleString()}`"></div>
+                  <div class="bar-segment operational" aria-hidden="true" :style="{ height: getBarHeight(month.operational) + '%' }" :title="`Operational: ${currencySymbol}${month.operational.toLocaleString()}`"></div>
+                  <div class="bar-segment labor" aria-hidden="true" :style="{ height: getBarHeight(month.labor) + '%' }" :title="`Labor: ${currencySymbol}${month.labor.toLocaleString()}`"></div>
+                  <div class="bar-segment overhead" aria-hidden="true" :style="{ height: getBarHeight(month.overhead) + '%' }" :title="`Overhead: ${currencySymbol}${month.overhead.toLocaleString()}`"></div>
                 </div>
                 <span class="bar-label">{{ translateMonth(month.month) }}</span>
               </div>
@@ -120,7 +135,7 @@
               <div class="category-meta">
                 <span class="percentage">{{ category.percentage }}% {{ t('finance.categorySpending.ofTotal') }}</span>
                 <span class="change" :class="{ positive: category.change > 0, negative: category.change < 0 }">
-                  {{ Math.abs(category.change) }}%
+                  {{ category.change > 0 ? '+' : category.change < 0 ? '-' : '' }}{{ Math.abs(category.change) }}%
                 </span>
               </div>
             </div>
@@ -136,11 +151,11 @@
             <table class="transactions-table">
               <thead>
                 <tr>
-                  <th>{{ t('finance.transactions.id') }}</th>
-                  <th>{{ t('finance.transactions.description') }}</th>
-                  <th>{{ t('finance.transactions.vendor') }}</th>
-                  <th>{{ t('finance.transactions.date') }}</th>
-                  <th class="text-right">{{ t('finance.transactions.amount') }}</th>
+                  <th scope="col">{{ t('finance.transactions.id') }}</th>
+                  <th scope="col">{{ t('finance.transactions.description') }}</th>
+                  <th scope="col">{{ t('finance.transactions.vendor') }}</th>
+                  <th scope="col">{{ t('finance.transactions.date') }}</th>
+                  <th scope="col" class="text-right">{{ t('finance.transactions.amount') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -148,7 +163,10 @@
                   v-for="transaction in recentTransactions"
                   :key="transaction.id"
                   class="clickable-row"
+                  tabindex="0"
                   @click="handleTransactionClick(transaction)"
+                  @keydown.enter.prevent="handleTransactionClick(transaction)"
+                  @keydown.space.prevent="handleTransactionClick(transaction)"
                 >
                   <td class="transaction-id">{{ transaction.id.toString().padStart(3, '0') }}</td>
                   <td class="transaction-description">{{ transaction.description }}</td>
@@ -305,7 +323,7 @@ export default {
     // Profit margin percentage
     const profitMargin = computed(() => {
       if (revenueMetrics.value.totalRevenue === 0) return 0
-      return ((netProfit.value / totalCosts.value) * 100).toFixed(1)
+      return ((netProfit.value / revenueMetrics.value.totalRevenue) * 100).toFixed(1)
     })
 
     // Monthly revenue data for chart
@@ -452,6 +470,18 @@ export default {
       alert(`Transaction Details:\n\nID: ${transaction.id}\nDescription: ${transaction.description}\nVendor: ${transaction.vendor}\nDate: ${formatDateShort(transaction.date)}\nAmount: $${transaction.amount.toLocaleString()}`)
     }
 
+    const formatChartAmount = (value) => {
+      return `${currencySymbol.value}${Number(value).toLocaleString()}`
+    }
+
+    const revenueBarLabel = (month) => {
+      return `${translateMonth(month.month)}, ${t('finance.revenueVsCosts.revenue')} ${formatChartAmount(month.revenue)}, ${t('finance.revenueVsCosts.costs')} ${formatChartAmount(month.costs)}`
+    }
+
+    const costBarLabel = (month) => {
+      return `${translateMonth(month.month)}, ${t('common.viewDetails')}, ${t('finance.monthlyCostFlow.procurement')} ${formatChartAmount(month.procurement)}, ${t('finance.monthlyCostFlow.operational')} ${formatChartAmount(month.operational)}, ${t('finance.monthlyCostFlow.labor')} ${formatChartAmount(month.labor)}, ${t('finance.monthlyCostFlow.overhead')} ${formatChartAmount(month.overhead)}`
+    }
+
     const showCostDetail = (monthData) => {
       selectedCostData.value = monthData
       showCostModal.value = true
@@ -482,6 +512,8 @@ export default {
       translateMonth,
       translateCategory,
       handleTransactionClick,
+      revenueBarLabel,
+      costBarLabel,
       showCostModal,
       selectedCostData,
       showCostDetail,
@@ -501,7 +533,7 @@ export default {
 }
 
 .stat-change.positive {
-  color: #059669;
+  color: #047857;
 }
 
 .stat-change.negative {
@@ -538,8 +570,8 @@ export default {
 
 .legend-dot.procurement { background: #3b82f6; }
 .legend-dot.operational { background: #8b5cf6; }
-.legend-dot.labor { background: #10b981; }
-.legend-dot.overhead { background: #f59e0b; }
+.legend-dot.labor { background: #059669; }
+.legend-dot.overhead { background: #b45309; }
 .legend-dot.revenue-color { background: #0f172a; }
 .legend-dot.cost-color { background: #ef4444; }
 
@@ -625,7 +657,7 @@ export default {
   justify-content: space-between;
   padding-right: 1rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #475569;
   border-right: 1px solid #e2e8f0;
 }
 
@@ -661,6 +693,12 @@ export default {
   opacity: 0.85;
 }
 
+.stacked-bar:focus {
+  outline: 3px solid #0f172a;
+  outline-offset: 2px;
+  opacity: 1;
+}
+
 .bar-segment {
   width: 100%;
   transition: all 0.3s ease;
@@ -678,8 +716,8 @@ export default {
 
 .bar-segment.procurement { background: #3b82f6; }
 .bar-segment.operational { background: #8b5cf6; }
-.bar-segment.labor { background: #10b981; }
-.bar-segment.overhead { background: #f59e0b; }
+.bar-segment.labor { background: #059669; }
+.bar-segment.overhead { background: #b45309; }
 
 .bar-segment:hover {
   opacity: 0.8;
@@ -757,7 +795,7 @@ export default {
 }
 
 .change.positive {
-  color: #059669;
+  color: #047857;
 }
 
 .change.negative {
@@ -816,12 +854,18 @@ export default {
   background: #f8fafc;
 }
 
-.transactions-table tbody tr.clickable-row:hover {
+.transactions-table tbody tr.clickable-row:hover,
+.transactions-table tbody tr.clickable-row:focus {
   background: #eff6ff;
 }
 
+.transactions-table tbody tr.clickable-row:focus {
+  outline: 3px solid #1d4ed8;
+  outline-offset: -3px;
+}
+
 .transaction-id {
-  color: #64748b;
+  color: #475569;
   font-weight: 500;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.813rem;
@@ -833,11 +877,11 @@ export default {
 }
 
 .transaction-vendor {
-  color: #64748b;
+  color: #475569;
 }
 
 .transaction-date {
-  color: #64748b;
+  color: #475569;
   font-size: 0.813rem;
 }
 

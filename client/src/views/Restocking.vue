@@ -16,7 +16,7 @@
           <h3 class="card-title">{{ t('restocking.budgetTitle') }}</h3>
         </div>
         <div class="budget-control">
-          <label class="budget-label">{{ t('restocking.budgetLabel') }}</label>
+          <label class="budget-label" for="restock-budget">{{ t('restocking.budgetLabel') }}</label>
           <input
             id="restock-budget"
             class="budget-slider"
@@ -53,7 +53,7 @@
 
       <div class="card">
         <div class="card-header header-row">
-          <h3 class="card-title">{{ t('restocking.recommendations') }}</h3>
+          <h3 id="restock-recommendations-title" class="card-title">{{ t('restocking.recommendations') }}</h3>
           <button
             type="button"
             class="primary-button"
@@ -72,17 +72,17 @@
 
         <p v-if="result.items.length === 0" class="empty-state">{{ t('restocking.empty') }}</p>
         <div v-else class="table-container">
-          <table class="restocking-table">
+          <table class="restocking-table" aria-labelledby="restock-recommendations-title">
             <thead>
               <tr>
-                <th>{{ t('restocking.table.sku') }}</th>
-                <th>{{ t('restocking.table.item') }}</th>
-                <th>{{ t('restocking.table.trend') }}</th>
-                <th class="num">{{ t('restocking.table.forecast') }}</th>
-                <th class="num">{{ t('restocking.table.onHand') }}</th>
-                <th>{{ t('restocking.table.quantity') }}</th>
-                <th class="num">{{ t('restocking.table.unitCost') }}</th>
-                <th class="num">{{ t('restocking.table.lineTotal') }}</th>
+                <th scope="col">{{ t('restocking.table.sku') }}</th>
+                <th scope="col">{{ t('restocking.table.item') }}</th>
+                <th scope="col">{{ t('restocking.table.trend') }}</th>
+                <th scope="col" class="num">{{ t('restocking.table.forecast') }}</th>
+                <th scope="col" class="num">{{ t('restocking.table.onHand') }}</th>
+                <th scope="col">{{ t('restocking.table.quantity') }}</th>
+                <th scope="col" class="num">{{ t('restocking.table.unitCost') }}</th>
+                <th scope="col" class="num">{{ t('restocking.table.lineTotal') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -95,7 +95,7 @@
                 <td class="num">{{ item.forecasted_demand }}</td>
                 <td class="num">{{ item.on_hand === null || item.on_hand === undefined ? t('restocking.unknown') : item.on_hand }}</td>
                 <td>
-                  <template v-if="item.quantity <= item.need">
+                  <template v-if="item.quantity < item.need">
                     {{ t('restocking.quantityOf', { quantity: item.quantity, need: item.need }) }}
                     <span class="badge warning">{{ t('restocking.partial') }}</span>
                   </template>
@@ -114,17 +114,17 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('restocking.notRecommended') }} ({{ result.not_recommended.length }})</h3>
+          <h3 id="restock-not-recommended-title" class="card-title">{{ t('restocking.notRecommended') }} ({{ result.not_recommended.length }})</h3>
         </div>
         <p v-if="result.not_recommended.length === 0" class="empty-state">{{ t('restocking.notRecommendedEmpty') }}</p>
         <div v-else class="table-container">
-          <table class="restocking-table">
+          <table class="restocking-table" aria-labelledby="restock-not-recommended-title">
             <thead>
               <tr>
-                <th>{{ t('restocking.table.sku') }}</th>
-                <th>{{ t('restocking.notRecommendedTable.item') }}</th>
-                <th>{{ t('restocking.notRecommendedTable.reason') }}</th>
-                <th class="num">{{ t('restocking.notRecommendedTable.need') }}</th>
+                <th scope="col">{{ t('restocking.table.sku') }}</th>
+                <th scope="col">{{ t('restocking.notRecommendedTable.item') }}</th>
+                <th scope="col">{{ t('restocking.notRecommendedTable.reason') }}</th>
+                <th scope="col" class="num">{{ t('restocking.notRecommendedTable.need') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -342,6 +342,13 @@ export default {
 </script>
 
 <style scoped>
+/* Shared styles use #64748b here (about 4.5:1). #334155 clears 4.5:1. */
+.page-header p,
+.loading,
+.stat-label {
+  color: #334155;
+}
+
 .header-row {
   display: flex;
   align-items: center;
@@ -404,12 +411,12 @@ export default {
 .primary-button:disabled {
   background: #e2e8f0;
   border-color: #e2e8f0;
-  color: #64748b;
+  color: #334155;
   cursor: not-allowed;
 }
 
 .price-source {
-  color: #64748b;
+  color: #334155;
   font-size: 0.75rem;
   font-weight: 400;
 }
@@ -439,7 +446,7 @@ export default {
 }
 
 .muted-note {
-  color: #64748b;
+  color: #334155;
   font-size: 0.875rem;
   margin: 0 0 1rem;
 }
@@ -456,7 +463,7 @@ export default {
 }
 
 .empty-state {
-  color: #64748b;
+  color: #334155;
   padding: 1rem 0;
   margin: 0;
 }
@@ -475,7 +482,7 @@ export default {
 
 .restocking-table th {
   background: #f8fafc;
-  color: #64748b;
+  color: #334155;
   font-weight: 600;
   border-bottom: 2px solid #e2e8f0;
 }
@@ -485,7 +492,7 @@ export default {
 }
 
 .footnotes {
-  color: #64748b;
+  color: #334155;
   font-size: 0.8125rem;
   margin-top: 0.5rem;
 }

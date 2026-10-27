@@ -2,10 +2,18 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen" class="modal-overlay" @click="close">
-        <div class="modal-container" @click.stop>
+        <div
+          ref="dialogEl"
+          class="modal-container"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-details-title"
+          @click.stop
+          @keydown="onDialogKeydown"
+        >
           <div class="modal-header">
-            <h3 class="modal-title">{{ t('profileDetails.title') }}</h3>
-            <button class="close-button" @click="close">
+            <h3 id="profile-details-title" class="modal-title">{{ t('profileDetails.title') }}</h3>
+            <button type="button" class="close-button" :aria-label="t('profileDetails.close')" @click="close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
@@ -57,7 +65,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">{{ t('profileDetails.close') }}</button>
+            <button type="button" class="btn-secondary" @click="close">{{ t('profileDetails.close') }}</button>
           </div>
         </div>
       </div>
@@ -66,6 +74,7 @@
 </template>
 
 <script setup>
+import { nextTick, ref, watch } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { useI18n } from '../composables/useI18n'
 
@@ -80,9 +89,39 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+const dialogEl = ref(null)
 
 const close = () => {
   emit('close')
+}
+
+const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+watch(() => props.isOpen, (open) => {
+  if (!open) return
+  nextTick(() => {
+    dialogEl.value?.querySelector('.close-button')?.focus()
+  })
+})
+
+const onDialogKeydown = (event) => {
+  if (event.key === 'Escape') {
+    event.stopPropagation()
+    close()
+    return
+  }
+  if (event.key !== 'Tab' || !dialogEl.value) return
+  const nodes = [...dialogEl.value.querySelectorAll(focusableSelector)]
+  if (nodes.length === 0) return
+  const first = nodes[0]
+  const last = nodes[nodes.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
 }
 
 const formatDate = (dateString) => {
@@ -156,6 +195,12 @@ const formatDate = (dateString) => {
   color: #0f172a;
 }
 
+.close-button:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -222,7 +267,7 @@ const formatDate = (dateString) => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #334155;
 }
 
 .info-value {

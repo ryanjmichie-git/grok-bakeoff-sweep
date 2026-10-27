@@ -2,10 +2,18 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen" class="modal-overlay" @click="close">
-        <div class="modal-container tasks-modal-container" @click.stop>
+        <div
+          ref="dialogEl"
+          class="modal-container tasks-modal-container"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tasks-modal-title"
+          @click.stop
+          @keydown="onDialogKeydown"
+        >
           <div class="modal-header">
-            <h3 class="modal-title">{{ t('tasks.title') }}</h3>
-            <button class="close-button" @click="close">
+            <h3 id="tasks-modal-title" class="modal-title">{{ t('tasks.title') }}</h3>
+            <button type="button" class="close-button" :aria-label="t('profileDetails.close')" @click="close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
@@ -54,7 +62,7 @@
                 </div>
 
                 <div class="form-group-btn">
-                  <button @click="handleAddTask" class="task-add-btn" :disabled="!newTask.title.trim() || !newTask.dueDate">
+                  <button type="button" @click="handleAddTask" class="task-add-btn" :disabled="!newTask.title.trim() || !newTask.dueDate">
                     {{ t('tasks.addTask') }}
                   </button>
                 </div>
@@ -78,14 +86,16 @@
                 <div class="task-header">
                   <div class="task-check-title">
                     <input
+                      :id="'task-check-' + task.id"
                       type="checkbox"
                       :checked="task.status === 'completed'"
+                      :aria-label="t('tasks.markComplete', { title: task.title })"
                       @change="$emit('toggle-task', task.id)"
                       class="task-checkbox"
                     />
-                    <span class="task-title" @click="$emit('toggle-task', task.id)">{{ task.title }}</span>
+                    <label class="task-title" :for="'task-check-' + task.id">{{ task.title }}</label>
                   </div>
-                  <button @click="$emit('delete-task', task.id)" class="task-delete-btn" title="Delete task">
+                  <button type="button" @click="$emit('delete-task', task.id)" class="task-delete-btn" :aria-label="t('tasks.delete', { title: task.title })">
                     ×
                   </button>
                 </div>
@@ -110,7 +120,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">{{ t('profileDetails.close') }}</button>
+            <button type="button" class="btn-secondary" @click="close">{{ t('profileDetails.close') }}</button>
           </div>
         </div>
       </div>
@@ -119,7 +129,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from '../composables/useI18n'
 
 export default {
@@ -137,6 +147,7 @@ export default {
   emits: ['close', 'add-task', 'delete-task', 'toggle-task'],
   setup(props, { emit }) {
     const { t, currentLocale } = useI18n()
+    const dialogEl = ref(null)
     const newTask = ref({
       title: '',
       priority: 'medium',
@@ -150,6 +161,35 @@ export default {
 
     const close = () => {
       emit('close')
+    }
+
+    const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+    watch(() => props.isOpen, (open) => {
+      if (!open) return
+      nextTick(() => {
+        dialogEl.value?.querySelector('.close-button')?.focus()
+      })
+    })
+
+    const onDialogKeydown = (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        close()
+        return
+      }
+      if (event.key !== 'Tab' || !dialogEl.value) return
+      const nodes = [...dialogEl.value.querySelectorAll(focusableSelector)]
+      if (nodes.length === 0) return
+      const first = nodes[0]
+      const last = nodes[nodes.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
 
     const handleAddTask = () => {
@@ -231,9 +271,11 @@ export default {
 
     return {
       t,
+      dialogEl,
       newTask,
       sortedTasks,
       close,
+      onDialogKeydown,
       handleAddTask,
       formatDueDate,
       getStatusClass,
@@ -304,6 +346,15 @@ export default {
 .close-button:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.close-button:focus-visible,
+.btn-secondary:focus-visible,
+.task-add-btn:focus-visible,
+.task-delete-btn:focus-visible,
+.task-checkbox:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
 }
 
 .modal-body {
@@ -387,8 +438,9 @@ label {
 
 .task-input:focus,
 .task-select:focus {
-  outline: none;
-  border-color: #667eea;
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+  border-color: #1d4ed8;
 }
 
 .task-select {
@@ -398,7 +450,7 @@ label {
 
 .task-add-btn {
   padding: 0.75rem 1.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1d4ed8;
   color: white;
   border: none;
   border-radius: 8px;
@@ -463,10 +515,6 @@ label {
   border-left: 4px solid #2563eb;
 }
 
-.task-item.completed {
-  opacity: 0.6;
-}
-
 .task-header {
   display: flex;
   justify-content: space-between;
@@ -502,13 +550,13 @@ label {
 
 .task-item.completed .task-title {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: #475569;
 }
 
 .task-delete-btn {
   width: 28px;
   height: 28px;
-  background: #ef4444;
+  background: #b91c1c;
   color: white;
   border: none;
   border-radius: 6px;
@@ -563,7 +611,7 @@ label {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.813rem;
-  color: #64748b;
+  color: #334155;
 }
 
 .task-due-date svg {

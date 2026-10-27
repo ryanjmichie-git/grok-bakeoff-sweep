@@ -11,6 +11,14 @@ const translations = {
 const savedLocale = localStorage.getItem('app-locale') || 'en'
 const currentLocale = ref(savedLocale)
 
+const applyDocumentLang = (locale) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = locale === 'ja' ? 'ja' : 'en'
+  }
+}
+
+applyDocumentLang(currentLocale.value)
+
 // Currency is automatically set based on locale (en -> USD, ja -> JPY)
 const currentCurrency = computed(() => {
   return currentLocale.value === 'ja' ? 'JPY' : 'USD'
@@ -61,6 +69,7 @@ export function useI18n() {
     if (translations[locale]) {
       currentLocale.value = locale
       localStorage.setItem('app-locale', locale)
+      applyDocumentLang(locale)
     }
   }
 

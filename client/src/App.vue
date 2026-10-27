@@ -257,6 +257,11 @@ body {
   background: #f1f5f9;
 }
 
+.nav-tabs a:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
 .nav-tabs a.active {
   color: #2563eb;
   background: #eff6ff;

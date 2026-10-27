@@ -1,9 +1,12 @@
 <template>
-  <div class="language-switcher">
+  <div class="language-switcher" @focusout="handleFocusOut">
     <button
+      type="button"
       class="language-button"
+      :aria-expanded="isDropdownOpen ? 'true' : 'false'"
+      aria-haspopup="true"
       @click="toggleDropdown"
-      @blur="handleBlur"
+      @keydown.escape.prevent="isDropdownOpen = false"
     >
       <svg
         width="20"
@@ -34,9 +37,11 @@
       <button
         v-for="locale in availableLocales"
         :key="locale"
+        type="button"
         class="dropdown-item"
         :class="{ active: currentLocale === locale }"
-        @mousedown.prevent="selectLanguage(locale)"
+        :aria-current="currentLocale === locale ? 'true' : undefined"
+        @click="selectLanguage(locale)"
       >
         <span class="language-name">{{ getLanguageName(locale) }}</span>
         <svg
@@ -75,11 +80,10 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const handleBlur = () => {
-  // Delay to allow mousedown events on dropdown items to fire first
-  setTimeout(() => {
+const handleFocusOut = (event) => {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
     isDropdownOpen.value = false
-  }, 200)
+  }
 }
 
 const selectLanguage = (locale) => {
@@ -111,6 +115,12 @@ const selectLanguage = (locale) => {
 .language-button:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
+}
+
+.language-button:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
 }
 
 .globe-icon {

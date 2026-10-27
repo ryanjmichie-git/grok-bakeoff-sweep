@@ -20,7 +20,7 @@
           <div class="trend-items">
             <div v-for="item in getForecastsByTrend('increasing').slice(0, 5)" :key="item.id" class="trend-item">
               <span class="item-name">{{ item.item_name }}</span>
-              <span class="item-change">+{{ getChangePercent(item) }}%</span>
+              <span class="item-change">{{ getChangePercent(item) }}%</span>
             </div>
             <div v-if="getForecastsByTrend('increasing').length > 5" class="more-items">
               +{{ getForecastsByTrend('increasing').length - 5 }} {{ t('demand.more') }}
@@ -69,19 +69,19 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('demand.demandForecasts') }}</h3>
+          <h3 id="demand-forecasts-title" class="card-title">{{ t('demand.demandForecasts') }}</h3>
         </div>
         <div class="table-container">
-          <table>
+          <table aria-labelledby="demand-forecasts-title">
             <thead>
               <tr>
-                <th>{{ t('demand.table.sku') }}</th>
-                <th>{{ t('demand.table.itemName') }}</th>
-                <th>{{ t('demand.table.currentDemand') }}</th>
-                <th>{{ t('demand.table.forecastedDemand') }}</th>
-                <th>{{ t('demand.table.change') }}</th>
-                <th>{{ t('demand.table.trend') }}</th>
-                <th>{{ t('demand.table.period') }}</th>
+                <th scope="col">{{ t('demand.table.sku') }}</th>
+                <th scope="col">{{ t('demand.table.itemName') }}</th>
+                <th scope="col">{{ t('demand.table.currentDemand') }}</th>
+                <th scope="col">{{ t('demand.table.forecastedDemand') }}</th>
+                <th scope="col">{{ t('demand.table.change') }}</th>
+                <th scope="col">{{ t('demand.table.trend') }}</th>
+                <th scope="col">{{ t('demand.table.period') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +96,7 @@
                   </span>
                 </td>
                 <td>
-                  <span :class="['badge', forecast.trend]"></span>
+                  <span :class="['badge', forecast.trend]">{{ t('trends.' + forecast.trend) }}</span>
                 </td>
                 <td>{{ translatePeriod(forecast.period) }}</td>
               </tr>
@@ -169,7 +169,11 @@ export default {
     }
 
     const getChangePercent = (forecast) => {
-      const change = ((forecast.current_demand - forecast.forecasted_demand) / forecast.current_demand * 100).toFixed(1)
+      // Zero current demand would divide to NaN; show a flat change instead.
+      if (forecast.current_demand === 0) {
+        return '0.0'
+      }
+      const change = ((forecast.forecasted_demand - forecast.current_demand) / forecast.current_demand * 100).toFixed(1)
       return change > 0 ? `+${change}` : change
     }
 
@@ -179,12 +183,12 @@ export default {
 
       // If change is within ±2%, consider it stable and show blue
       if (changePercent <= 2) {
-        return '#3b82f6' // Blue for stable
+        return '#2563eb' // Blue for stable
       }
 
-      if (change > 0) return '#10b981' // Green for increasing
-      if (change < 0) return '#ef4444' // Red for decreasing
-      return '#3b82f6' // Blue for no change
+      if (change > 0) return '#047857' // Green for increasing
+      if (change < 0) return '#dc2626' // Red for decreasing
+      return '#2563eb' // Blue for no change
     }
 
     const translatePeriod = (period) => {
@@ -276,17 +280,17 @@ export default {
 
 .increasing-card .trend-icon {
   background: #d1fae5;
-  color: #059669;
+  color: #047857;
 }
 
 .stable-card .trend-icon {
   background: #dbeafe;
-  color: #2563eb;
+  color: #1d4ed8;
 }
 
 .decreasing-card .trend-icon {
   background: #fee2e2;
-  color: #dc2626;
+  color: #b91c1c;
 }
 
 .trend-label {
@@ -342,19 +346,19 @@ export default {
 }
 
 .increasing-card .item-change {
-  color: #059669;
+  color: #047857;
 }
 
 .stable-card .item-change {
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .decreasing-card .item-change {
-  color: #dc2626;
+  color: #b91c1c;
 }
 
 .item-change.neutral {
-  color: #64748b;
+  color: #475569;
 }
 
 .more-items {

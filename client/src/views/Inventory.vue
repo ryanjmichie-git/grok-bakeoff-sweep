@@ -5,28 +5,32 @@
       <p>{{ t('inventory.description') }}</p>
     </div>
 
-    <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="loading" role="status">{{ t('common.loading') }}</div>
+    <div v-else-if="error" class="error" role="alert">{{ error }}</div>
     <div v-else>
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">{{ t('inventory.stockLevels') }} ({{ filteredItems.length }} {{ t('inventory.skus') }})</h3>
           <div class="search-box">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
             </svg>
             <input
               v-model="searchQuery"
               type="text"
               class="search-input"
+              :placeholder="t('inventory.searchPlaceholder')"
+              :aria-label="t('inventory.searchPlaceholder')"
             />
             <button
               v-if="searchQuery"
+              type="button"
               @click="searchQuery = ''"
               class="clear-search"
               :title="t('inventory.clearSearch')"
+              :aria-label="t('inventory.clearSearch')"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
             </button>
@@ -36,15 +40,15 @@
           <table>
             <thead>
               <tr>
-                <th>{{ t('inventory.table.sku') }}</th>
-                <th>{{ t('inventory.table.itemName') }}</th>
-                <th>{{ t('inventory.table.category') }}</th>
-                <th>{{ t('inventory.table.quantityOnHand') }}</th>
-                <th>{{ t('inventory.table.reorderPoint') }}</th>
-                <th>{{ t('inventory.table.unitCost') }}</th>
-                <th>{{ t('inventory.table.totalValue') }}</th>
-                <th>{{ t('inventory.table.location') }}</th>
-                <th>{{ t('inventory.table.status') }}</th>
+                <th scope="col">{{ t('inventory.table.sku') }}</th>
+                <th scope="col">{{ t('inventory.table.itemName') }}</th>
+                <th scope="col">{{ t('inventory.table.category') }}</th>
+                <th scope="col">{{ t('inventory.table.quantityOnHand') }}</th>
+                <th scope="col">{{ t('inventory.table.reorderPoint') }}</th>
+                <th scope="col">{{ t('inventory.table.unitCost') }}</th>
+                <th scope="col">{{ t('inventory.table.totalValue') }}</th>
+                <th scope="col">{{ t('inventory.table.location') }}</th>
+                <th scope="col">{{ t('inventory.table.status') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -52,7 +56,10 @@
                 v-for="item in filteredItems"
                 :key="item.id"
                 class="clickable-row"
+                tabindex="0"
                 @click="showItemDetail(item)"
+                @keydown.enter.prevent="showItemDetail(item)"
+                @keydown.space.prevent="showItemDetail(item)"
               >
                 <td><strong>{{ item.sku }}</strong></td>
                 <td>{{ translateProductName(item.name) }}</td>
@@ -134,9 +141,11 @@ export default {
       // Apply search filter if query exists
       if (searchQuery.value.trim()) {
         const query = searchQuery.value.toLowerCase().trim()
-        filtered = filtered.filter(item =>
-          item.name.includes(query)
-        )
+        filtered = filtered.filter(item => {
+          const rawName = item.name.toLowerCase()
+          const shownName = translateProductName(item.name).toLowerCase()
+          return rawName.includes(query) || shownName.includes(query)
+        })
       }
 
       // Sort by stock status: Low Stock first, then Adequate, then In Stock
@@ -233,7 +242,7 @@ export default {
 }
 
 .page-header p {
-  color: #64748b;
+  color: #475569;
   font-size: 0.875rem;
 }
 
@@ -265,30 +274,30 @@ export default {
   left: 0.75rem;
   width: 18px;
   height: 18px;
-  color: #94a3b8;
+  color: #475569;
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
   padding: 0.5rem 2.5rem 0.5rem 2.5rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #64748b;
   border-radius: 8px;
   font-size: 0.875rem;
   color: #0f172a;
   background: #f8fafc;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-color: #2563eb;
   background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .search-input::placeholder {
-  color: #94a3b8;
+  color: #475569;
 }
 
 .clear-search {
@@ -301,14 +310,20 @@ export default {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: #94a3b8;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .clear-search:hover {
   background: #e2e8f0;
-  color: #64748b;
+  color: #1e293b;
+}
+
+.clear-search:focus,
+.clear-search:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 .clear-search svg {
@@ -320,11 +335,11 @@ export default {
 .error {
   padding: 2rem;
   text-align: center;
-  color: #64748b;
+  color: #475569;
 }
 
 .error {
-  color: #ef4444;
+  color: #991b1b;
 }
 
 .clickable-row {
@@ -334,5 +349,17 @@ export default {
 
 .clickable-row:hover {
   background: #eff6ff !important;
+}
+
+.clickable-row:focus,
+.clickable-row:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  background: #eff6ff !important;
+}
+
+.clickable-row:focus td:first-child,
+.clickable-row:focus-visible td:first-child {
+  box-shadow: inset 3px 0 0 #2563eb;
 }
 </style>

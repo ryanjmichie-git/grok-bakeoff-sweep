@@ -2,11 +2,25 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen && product" class="modal-overlay" @click="close">
-        <div class="modal-container" @click.stop>
+        <div
+          ref="dialogRef"
+          class="modal-container"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="product-detail-title"
+          tabindex="-1"
+          @click.stop
+        >
           <div class="modal-header">
-            <h3 class="modal-title">Product Details</h3>
-            <button class="close-button" @click="close">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <h3 id="product-detail-title" class="modal-title">Product Details</h3>
+            <button
+              ref="closeButtonRef"
+              type="button"
+              class="close-button"
+              :aria-label="t('common.close')"
+              @click="close"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
@@ -15,7 +29,7 @@
           <div class="modal-body">
             <div class="product-header">
               <div class="product-icon">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false">
                   <rect x="8" y="12" width="32" height="28" rx="2" stroke="currentColor" stroke-width="2.5"/>
                   <path d="M16 8V16M32 8V16M8 20H40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
@@ -77,7 +91,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button type="button" class="btn-secondary" @click="close">Close</button>
           </div>
         </div>
       </div>
@@ -86,10 +100,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from '../composables/useI18n'
 
-const { currentCurrency } = useI18n()
+const { currentCurrency, t } = useI18n()
 
 const currencySymbol = computed(() => {
   return currentCurrency.value === 'JPY' ? '¥' : '$'
@@ -108,9 +122,63 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+const dialogRef = ref(null)
+const closeButtonRef = ref(null)
+let previouslyFocused = null
+
 const close = () => {
   emit('close')
 }
+
+const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+const onDialogKeydown = (event) => {
+  if (!props.isOpen) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    close()
+    return
+  }
+  if (event.key !== 'Tab') return
+  const root = dialogRef.value
+  if (!root) return
+  const focusable = [...root.querySelectorAll(focusableSelector)].filter((el) => !el.disabled)
+  if (focusable.length === 0) {
+    event.preventDefault()
+    return
+  }
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  const active = document.activeElement
+  if (event.shiftKey) {
+    if (active === first || !root.contains(active)) {
+      event.preventDefault()
+      last.focus()
+    }
+  } else if (active === last || !root.contains(active)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(() => props.isOpen, async (open) => {
+  if (open) {
+    previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.addEventListener('keydown', onDialogKeydown)
+    await nextTick()
+    if (!props.isOpen) return
+    closeButtonRef.value?.focus()
+  } else {
+    document.removeEventListener('keydown', onDialogKeydown)
+    const restore = previouslyFocused
+    previouslyFocused = null
+    restore?.focus()
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onDialogKeydown)
+})
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -188,6 +256,12 @@ const getStockBadgeClass = (stockLevel) => {
 .close-button:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.close-button:focus,
+.close-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 .modal-body {
@@ -310,6 +384,12 @@ const getStockBadgeClass = (stockLevel) => {
 .btn-secondary:hover {
   background: #e2e8f0;
   border-color: #cbd5e1;
+}
+
+.btn-secondary:focus,
+.btn-secondary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 /* Modal transition animations */

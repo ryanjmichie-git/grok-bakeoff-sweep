@@ -5,23 +5,23 @@
       <p>{{ t('reports.description') }}</p>
     </div>
 
-    <div v-if="loading" class="loading">{{ t('reports.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="loading" role="status">{{ t('reports.loading') }}</div>
+    <div v-else-if="error" class="error" role="alert">{{ error }}</div>
     <div v-else>
       <!-- Quarterly Performance -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('reports.quarterly.title') }}</h3>
+          <h3 id="reports-quarterly-title" class="card-title">{{ t('reports.quarterly.title') }}</h3>
         </div>
         <div class="table-container">
-          <table class="reports-table">
+          <table class="reports-table" aria-labelledby="reports-quarterly-title">
             <thead>
               <tr>
-                <th>{{ t('reports.quarterly.quarter') }}</th>
-                <th>{{ t('reports.quarterly.totalOrders') }}</th>
-                <th>{{ t('reports.quarterly.totalRevenue') }}</th>
-                <th>{{ t('reports.quarterly.avgOrderValue') }}</th>
-                <th>{{ t('reports.quarterly.fulfillmentRate') }}</th>
+                <th scope="col">{{ t('reports.quarterly.quarter') }}</th>
+                <th scope="col">{{ t('reports.quarterly.totalOrders') }}</th>
+                <th scope="col">{{ t('reports.quarterly.totalRevenue') }}</th>
+                <th scope="col">{{ t('reports.quarterly.avgOrderValue') }}</th>
+                <th scope="col">{{ t('reports.quarterly.fulfillmentRate') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -44,38 +44,39 @@
       <!-- Monthly Trends Chart -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('reports.trend.title') }}</h3>
+          <h3 id="reports-trend-title" class="card-title">{{ t('reports.trend.title') }}</h3>
         </div>
         <div class="chart-container">
-          <div class="bar-chart">
-            <div v-for="month in monthlyData" :key="month.month" class="bar-wrapper">
+          <ul class="bar-chart" aria-labelledby="reports-trend-title">
+            <li v-for="month in monthlyData" :key="month.month" class="bar-wrapper">
+              <div class="bar-value">{{ formatCurrency(month.revenue, currentCurrency) }}</div>
               <div class="bar-container">
                 <div
                   class="bar"
                   :style="{ height: getBarHeight(month.revenue) + 'px' }"
-                  :title="formatCurrency(month.revenue, currentCurrency)"
+                  aria-hidden="true"
                 ></div>
               </div>
               <div class="bar-label">{{ formatMonth(month.month) }}</div>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </div>
 
       <!-- Month-over-Month Comparison -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('reports.mom.title') }}</h3>
+          <h3 id="reports-mom-title" class="card-title">{{ t('reports.mom.title') }}</h3>
         </div>
         <div class="table-container">
-          <table class="reports-table">
+          <table class="reports-table" aria-labelledby="reports-mom-title">
             <thead>
               <tr>
-                <th>{{ t('reports.mom.month') }}</th>
-                <th>{{ t('reports.mom.orders') }}</th>
-                <th>{{ t('reports.mom.revenue') }}</th>
-                <th>{{ t('reports.mom.change') }}</th>
-                <th>{{ t('reports.mom.growthRate') }}</th>
+                <th scope="col">{{ t('reports.mom.month') }}</th>
+                <th scope="col">{{ t('reports.mom.orders') }}</th>
+                <th scope="col">{{ t('reports.mom.revenue') }}</th>
+                <th scope="col">{{ t('reports.mom.change') }}</th>
+                <th scope="col">{{ t('reports.mom.growthRate') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -247,7 +248,7 @@ export default {
 
     const getGrowthRate = (current, previous) => {
       if (previous === 0) return t('reports.notAvailable')
-      const rate = ((current - previous) / current) * 100
+      const rate = ((current - previous) / previous) * 100
       const sign = rate > 0 ? '+' : ''
       const marker = rate > 0 ? t('reports.up') : rate < 0 ? t('reports.down') : t('reports.flat')
       return `${marker} ${sign}${rate.toFixed(1)}%`
@@ -283,6 +284,10 @@ export default {
   padding: 0;
 }
 
+.page-header p {
+  color: #334155;
+}
+
 .card {
   background: white;
   border-radius: 12px;
@@ -312,7 +317,7 @@ export default {
   padding: 0.75rem;
   text-align: left;
   font-weight: 600;
-  color: #64748b;
+  color: #334155;
   border-bottom: 2px solid #e2e8f0;
 }
 
@@ -334,8 +339,11 @@ export default {
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  height: 250px;
+  min-height: 250px;
   gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .bar-wrapper {
@@ -357,18 +365,27 @@ export default {
   width: 100%;
   background: linear-gradient(to top, #3b82f6, #60a5fa);
   border-radius: 4px 4px 0 0;
-  transition: all 0.3s;
-  cursor: pointer;
+  transition: background 0.3s;
 }
 
 .bar:hover {
   background: linear-gradient(to top, #2563eb, #3b82f6);
 }
 
+.bar-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+  max-width: 100%;
+}
+
 .bar-label {
   margin-top: 0.5rem;
   font-size: 0.75rem;
-  color: #64748b;
+  color: #334155;
   text-align: center;
   transform: rotate(-45deg);
   white-space: nowrap;
@@ -392,7 +409,7 @@ export default {
 
 .stat-label {
   font-size: 0.875rem;
-  color: #cbd5e1;
+  color: #334155;
   margin-bottom: 0.5rem;
 }
 
@@ -425,7 +442,7 @@ export default {
 }
 
 .positive-change {
-  color: #16a34a;
+  color: #166534;
   font-weight: 600;
 }
 
@@ -437,7 +454,7 @@ export default {
 .loading {
   text-align: center;
   padding: 3rem;
-  color: #64748b;
+  color: #334155;
 }
 
 .error {

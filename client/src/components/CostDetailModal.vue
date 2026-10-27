@@ -2,11 +2,25 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="isOpen && costData" class="modal-overlay" @click="close">
-        <div class="modal-container" @click.stop>
+        <div
+          ref="dialogRef"
+          class="modal-container"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cost-detail-title"
+          tabindex="-1"
+          @click.stop
+        >
           <div class="modal-header">
-            <h3 class="modal-title">{{ costData.month }} Cost Breakdown</h3>
-            <button class="close-button" @click="close">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <h3 id="cost-detail-title" class="modal-title">{{ costData.month }} Cost Breakdown</h3>
+            <button
+              ref="closeButtonRef"
+              type="button"
+              class="close-button"
+              :aria-label="t('profileDetails.close')"
+              @click="close"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
@@ -24,7 +38,7 @@
               <div class="cost-item procurement">
                 <div class="cost-header">
                   <div class="cost-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                       <rect x="4" y="6" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
                       <path d="M8 6V4M16 6V4M4 10H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
@@ -40,7 +54,7 @@
               <div class="cost-item operational">
                 <div class="cost-header">
                   <div class="cost-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                       <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/>
                       <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
@@ -56,7 +70,7 @@
               <div class="cost-item labor">
                 <div class="cost-header">
                   <div class="cost-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                       <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
                       <path d="M6 20C6 16.6863 8.68629 14 12 14C15.3137 14 18 16.6863 18 20" stroke="currentColor" stroke-width="2"/>
                     </svg>
@@ -72,7 +86,7 @@
               <div class="cost-item overhead">
                 <div class="cost-header">
                   <div class="cost-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                       <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9 21 9 18 9 16C9 14 10 14 12 14C14 14 15 14 15 16C15 18 15 21 15 21M9 21H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                   </div>
@@ -87,7 +101,7 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button type="button" class="btn-secondary" @click="close">Close</button>
           </div>
         </div>
       </div>
@@ -96,10 +110,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from '../composables/useI18n'
 
-const { currentCurrency } = useI18n()
+const { currentCurrency, t } = useI18n()
 
 const currencySymbol = computed(() => {
   return currentCurrency.value === 'JPY' ? '¥' : '$'
@@ -117,6 +131,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+const dialogRef = ref(null)
+const closeButtonRef = ref(null)
+let previouslyFocused = null
 
 const totalCosts = computed(() => {
   if (!props.costData) return 0
@@ -147,6 +165,54 @@ const getOverheadPercentage = () => {
 const close = () => {
   emit('close')
 }
+
+const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+const onDialogKeydown = (event) => {
+  if (!props.isOpen) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    close()
+    return
+  }
+  if (event.key !== 'Tab') return
+  const root = dialogRef.value
+  if (!root) return
+  const focusable = [...root.querySelectorAll(focusableSelector)].filter((el) => !el.disabled)
+  if (focusable.length === 0) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  const active = document.activeElement
+  if (event.shiftKey) {
+    if (active === first || !root.contains(active)) {
+      event.preventDefault()
+      last.focus()
+    }
+  } else if (active === last || !root.contains(active)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(() => props.isOpen, async (open) => {
+  if (open) {
+    previouslyFocused = document.activeElement
+    document.addEventListener('keydown', onDialogKeydown)
+    await nextTick()
+    closeButtonRef.value?.focus({ focusVisible: true })
+  } else {
+    document.removeEventListener('keydown', onDialogKeydown)
+    const target = previouslyFocused
+    previouslyFocused = null
+    if (target && typeof target.focus === 'function') {
+      target.focus()
+    }
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', onDialogKeydown)
+})
 </script>
 
 <style scoped>
@@ -209,6 +275,13 @@ const close = () => {
   color: #0f172a;
 }
 
+.close-button:focus {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -226,7 +299,7 @@ const close = () => {
 }
 
 .summary-card.total {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   color: white;
 }
 
@@ -235,7 +308,7 @@ const close = () => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  opacity: 0.9;
+  opacity: 1;
   margin-bottom: 0.5rem;
 }
 
@@ -304,12 +377,12 @@ const close = () => {
 }
 
 .cost-item.labor .cost-icon {
-  background: #10b981;
+  background: #059669;
   color: white;
 }
 
 .cost-item.overhead .cost-icon {
-  background: #f59e0b;
+  background: #b45309;
   color: white;
 }
 
@@ -332,7 +405,7 @@ const close = () => {
 
 .cost-percentage {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #475569;
   font-weight: 500;
 }
 
@@ -359,6 +432,11 @@ const close = () => {
 .btn-secondary:hover {
   background: #e2e8f0;
   border-color: #cbd5e1;
+}
+
+.btn-secondary:focus {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
 }
 
 /* Modal transition animations */

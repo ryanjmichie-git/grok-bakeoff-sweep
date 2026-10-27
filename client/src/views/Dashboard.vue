@@ -4,8 +4,8 @@
       <h2>{{ t('dashboard.title') }}</h2>
     </div>
 
-    <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="loading" role="status">{{ t('common.loading') }}</div>
+    <div v-else-if="error" class="error" role="alert">{{ error }}</div>
     <div v-else>
       <!-- Key Performance Indicators -->
       <div class="kpi-section">
@@ -17,7 +17,7 @@
             </div>
             <div class="kpi-value">4.2</div>
             <div class="kpi-goal">{{ t('dashboard.kpi.goal') }}: 4.5 (-6.67%)</div>
-            <div class="kpi-progress-bar">
+            <div class="kpi-progress-bar" aria-hidden="true">
               <div class="kpi-progress" style="width: 93.33%"></div>
             </div>
           </div>
@@ -28,7 +28,7 @@
             </div>
             <div class="kpi-value">{{ ordersData.fulfilled }}</div>
             <div class="kpi-goal">{{ t('dashboard.kpi.goal') }}: {{ ordersData.goal }} ({{ calculatePercentage(ordersData.fulfilled, ordersData.goal) }}%)</div>
-            <div class="kpi-progress-bar">
+            <div class="kpi-progress-bar" aria-hidden="true">
               <div class="kpi-progress" :style="{ width: calculatePercentage(ordersData.fulfilled, ordersData.goal) + '%' }"></div>
             </div>
           </div>
@@ -39,7 +39,7 @@
             </div>
             <div class="kpi-value">{{ fillRate }}%</div>
             <div class="kpi-goal">{{ t('dashboard.kpi.goal') }}: 95% ({{ fillRate - 95 > 0 ? '+' : '' }}{{ (fillRate - 95).toFixed(2) }}%)</div>
-            <div class="kpi-progress-bar">
+            <div class="kpi-progress-bar" aria-hidden="true">
               <div class="kpi-progress success" :style="{ width: (fillRate / 95 * 100) + '%' }"></div>
             </div>
           </div>
@@ -50,7 +50,7 @@
             </div>
             <div class="kpi-value">{{ formatCurrency(Math.round(summary.total_orders_value), selectedCurrency) }}</div>
             <div class="kpi-goal">{{ t('dashboard.kpi.goal') }}: {{ formatCurrency(revenueGoal, selectedCurrency) }} ({{ summary.total_orders_value > revenueGoal ? '+' : '' }}{{ ((summary.total_orders_value / revenueGoal - 1) * 100).toFixed(1) }}%)</div>
-            <div class="kpi-progress-bar">
+            <div class="kpi-progress-bar" aria-hidden="true">
               <div class="kpi-progress" :style="{ width: Math.min((summary.total_orders_value / revenueGoal * 100), 100) + '%' }"></div>
             </div>
           </div>
@@ -61,7 +61,7 @@
             </div>
             <div class="kpi-value">2.8</div>
             <div class="kpi-goal">{{ t('dashboard.kpi.goal') }}: 3.0 (-6.67%)</div>
-            <div class="kpi-progress-bar">
+            <div class="kpi-progress-bar" aria-hidden="true">
               <div class="kpi-progress success" style="width: 93.33%"></div>
             </div>
           </div>
@@ -84,7 +84,7 @@
             <div class="order-health-container">
               <!-- Left: Donut Chart -->
               <div class="order-health-chart">
-                <svg viewBox="0 0 200 200" class="donut-svg-compact">
+                <svg viewBox="0 0 200 200" class="donut-svg-compact" role="img" :aria-label="orderStatusSummary">
                   <circle cx="100" cy="100" r="65" fill="none" stroke="#e2e8f0" stroke-width="25"/>
                   <circle cx="100" cy="100" r="65" fill="none" stroke="#10b981" stroke-width="25"
                     :stroke-dasharray="`${getCircleSegment(statusData.delivered)} 408`"
@@ -104,12 +104,12 @@
                   <text x="100" y="90" text-anchor="middle" class="donut-center-label">{{ t('dashboard.orderHealth.total') }}</text>
                   <text x="100" y="120" text-anchor="middle" class="donut-center-value">{{ orderHealthMetrics.totalOrders }}</text>
                 </svg>
-                <div class="donut-legend-compact">
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #10b981"></span>{{ t('status.delivered') }}</div>
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #3b82f6"></span>{{ t('status.shipped') }}</div>
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #f59e0b"></span>{{ t('status.processing') }}</div>
-                  <div class="legend-item-compact"><span class="legend-dot" style="background: #ef4444"></span>{{ t('status.backordered') }}</div>
-                </div>
+                <ul class="donut-legend-compact">
+                  <li class="legend-item-compact"><span class="legend-dot" style="background: #10b981" aria-hidden="true"></span>{{ t('status.delivered') }}</li>
+                  <li class="legend-item-compact"><span class="legend-dot" style="background: #3b82f6" aria-hidden="true"></span>{{ t('status.shipped') }}</li>
+                  <li class="legend-item-compact"><span class="legend-dot" style="background: #f59e0b" aria-hidden="true"></span>{{ t('status.processing') }}</li>
+                  <li class="legend-item-compact"><span class="legend-dot" style="background: #ef4444" aria-hidden="true"></span>{{ t('status.backordered') }}</li>
+                </ul>
               </div>
 
               <!-- Right: Health Metrics -->
@@ -126,6 +126,7 @@
                   <div class="health-metric-label">{{ t('dashboard.orderHealth.onTimeRate') }}</div>
                   <div class="health-metric-value" :class="{ 'metric-good': orderHealthMetrics.onTimeRate >= 90, 'metric-warning': orderHealthMetrics.onTimeRate < 90 && orderHealthMetrics.onTimeRate >= 75, 'metric-bad': orderHealthMetrics.onTimeRate < 75 }">
                     {{ orderHealthMetrics.onTimeRate.toFixed(1) }}%
+                    <span class="status-cue">{{ onTimeLabel(orderHealthMetrics.onTimeRate) }}</span>
                   </div>
                 </div>
                 <div class="health-metric">
@@ -160,50 +161,56 @@
         <!-- Inventory Shortages -->
         <div class="card chart-card full-width">
           <div class="card-header">
-            <h3 class="card-title">{{ t('dashboard.inventoryShortages.title') }} ({{ backlogItems.length }})</h3>
+            <h3 id="inventory-shortages-title" class="card-title">{{ t('dashboard.inventoryShortages.title') }} ({{ backlogItems.length }})</h3>
           </div>
           <div v-if="backlogItems.length === 0" class="no-backlog">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="success-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="success-icon" aria-hidden="true" focusable="false">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
             <p class="no-backlog-text">{{ t('dashboard.inventoryShortages.noShortages') }}</p>
           </div>
           <div v-else class="table-container">
-            <table>
+            <table aria-labelledby="inventory-shortages-title">
               <thead>
                 <tr>
-                  <th>{{ t('dashboard.inventoryShortages.orderId') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.sku') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.itemName') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.quantityNeeded') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.quantityAvailable') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.shortage') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.daysDelayed') }}</th>
-                  <th>{{ t('dashboard.inventoryShortages.priority') }}</th>
-                  <th>Actions</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.orderId') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.sku') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.itemName') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.quantityNeeded') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.quantityAvailable') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.shortage') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.daysDelayed') }}</th>
+                  <th scope="col">{{ t('dashboard.inventoryShortages.priority') }}</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="item in backlogItems"
                   :key="item.id"
+                  class="clickable-row"
+                  tabindex="0"
+                  @click="showBacklogDetail(item)"
+                  @keydown.enter="onBacklogRowKey($event, item)"
+                  @keydown.space="onBacklogRowKey($event, item)"
                 >
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;"><strong>{{ item.order_id }}</strong></td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;"><strong>{{ item.item_sku }}</strong></td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;">{{ translateProductName(item.item_name) }}</td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;">{{ item.quantity_needed }}</td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;">{{ item.quantity_available }}</td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;">
+                  <td><strong>{{ item.order_id }}</strong></td>
+                  <td><strong>{{ item.item_sku }}</strong></td>
+                  <td>{{ translateProductName(item.item_name) }}</td>
+                  <td>{{ item.quantity_needed }}</td>
+                  <td>{{ item.quantity_available }}</td>
+                  <td>
                     <span class="badge danger">
                       {{ Math.abs(item.quantity_needed - item.quantity_available) }} {{ t('dashboard.inventoryShortages.unitsShort') }}
                     </span>
                   </td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;">
-                    <span :style="{ color: item.days_delayed > 7 ? '#ef4444' : '#f59e0b', fontWeight: 600 }">
+                  <td>
+                    <span :class="['delay-value', item.days_delayed > 7 ? 'metric-bad' : 'metric-warning']">
                       {{ item.days_delayed }} {{ t('dashboard.inventoryShortages.days') }}
+                      <span class="status-cue">{{ item.days_delayed > 7 ? t('reports.fulfillment.low') : t('reports.fulfillment.fair') }}</span>
                     </span>
                   </td>
-                  <td @click="showBacklogDetail(item)" style="cursor: pointer;">
+                  <td>
                     <span :class="['badge', item.priority]">
                       {{ translatePriority(item.priority) }}
                     </span>
@@ -211,6 +218,7 @@
                   <td>
                     <button
                       v-if="!item.purchase_order_id"
+                      type="button"
                       @click.stop="openPOModal(item)"
                       class="po-button create"
                     >
@@ -218,6 +226,7 @@
                     </button>
                     <button
                       v-else
+                      type="button"
                       @click.stop="viewPO(item)"
                       class="po-button view"
                     >
@@ -233,19 +242,19 @@
         <!-- Top Products Table -->
         <div class="card chart-card full-width">
           <div class="card-header">
-            <h3 class="card-title">{{ t('dashboard.topProducts.title') }}</h3>
+            <h3 id="top-products-title" class="card-title">{{ t('dashboard.topProducts.title') }}</h3>
           </div>
           <div class="table-container">
-            <table>
+            <table aria-labelledby="top-products-title">
               <thead>
                 <tr>
-                  <th>{{ t('dashboard.topProducts.product') }}</th>
-                  <th>{{ t('dashboard.topProducts.sku') }}</th>
-                  <th>{{ t('dashboard.topProducts.category') }}</th>
-                  <th>{{ t('dashboard.topProducts.unitsOrdered') }}</th>
-                  <th>{{ t('dashboard.topProducts.revenue') }}</th>
-                  <th>{{ t('dashboard.topProducts.firstOrder') }}</th>
-                  <th>{{ t('dashboard.topProducts.stockStatus') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.product') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.sku') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.category') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.unitsOrdered') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.revenue') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.firstOrder') }}</th>
+                  <th scope="col">{{ t('dashboard.topProducts.stockStatus') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,7 +262,10 @@
                   v-for="item in topProducts"
                   :key="item.sku"
                   class="clickable-row"
+                  tabindex="0"
                   @click="showProductDetail(item)"
+                  @keydown.enter.prevent="showProductDetail(item)"
+                  @keydown.space.prevent="showProductDetail(item)"
                 >
                   <td><strong>{{ translateProductName(item.name) }}</strong></td>
                   <td>{{ item.sku }}</td>
@@ -378,7 +390,7 @@ export default {
         }
         return false
       }).length
-      const onTimeRate = totalOrders > 0 ? (onTimeDeliveries / totalOrders) * 100 : 0
+      const onTimeRate = deliveredOrders.length > 0 ? (onTimeDeliveries / deliveredOrders.length) * 100 : 0
 
       // Calculate average fulfillment speed (days from order to delivery for delivered orders)
       let totalDays = 0
@@ -402,6 +414,30 @@ export default {
         avgFulfillmentDays
       }
     })
+
+    const onTimeLabel = (rate) => {
+      if (rate >= 90) return t('reports.fulfillment.good')
+      if (rate >= 75) return t('reports.fulfillment.fair')
+      return t('reports.fulfillment.low')
+    }
+
+    const orderStatusSummary = computed(() => {
+      const counts = statusData.value
+      return [
+        t('dashboard.orderHealth.title'),
+        `${t('dashboard.orderHealth.total')} ${orderHealthMetrics.value.totalOrders}`,
+        `${t('status.delivered')} ${counts.delivered}`,
+        `${t('status.shipped')} ${counts.shipped}`,
+        `${t('status.processing')} ${counts.processing}`,
+        `${t('status.backordered')} ${counts.backordered}`
+      ].join('. ')
+    })
+
+    const onBacklogRowKey = (event, item) => {
+      if (event.target !== event.currentTarget) return
+      event.preventDefault()
+      showBacklogDetail(item)
+    }
 
     const categoryData = computed(() => {
       // Group inventory by category and calculate values
@@ -688,6 +724,9 @@ export default {
       fillRate,
       statusData,
       orderHealthMetrics,
+      onTimeLabel,
+      orderStatusSummary,
+      onBacklogRowKey,
       categoryData,
       maxCategoryValue,
       orderTrendData,
@@ -899,6 +938,9 @@ export default {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.625rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .legend-item-compact {
@@ -928,7 +970,7 @@ export default {
 
 .health-metric-label {
   font-size: 0.688rem;
-  color: #cbd5e1;
+  color: #475569;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -942,15 +984,34 @@ export default {
 }
 
 .metric-good {
-  color: #10b981;
+  color: #047857;
 }
 
 .metric-warning {
-  color: #f59e0b;
+  color: #b45309;
 }
 
 .metric-bad {
-  color: #ef4444;
+  color: #b91c1c;
+}
+
+.health-metric-value .status-cue {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.delay-value {
+  font-weight: 600;
+}
+
+.delay-value .status-cue {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .horizontal-bar-chart {
@@ -1077,7 +1138,7 @@ export default {
 .no-data {
   padding: 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.875rem;
 }
 
@@ -1093,12 +1154,12 @@ export default {
 .success-icon {
   width: 48px;
   height: 48px;
-  color: #10b981;
+  color: #047857;
 }
 
 .no-backlog-text {
   font-size: 1.125rem;
-  color: #10b981;
+  color: #047857;
   font-weight: 600;
   margin: 0;
 }
@@ -1110,6 +1171,18 @@ export default {
 
 .clickable-row:hover {
   background: #eff6ff !important;
+}
+
+.clickable-row:focus,
+.clickable-row:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  background: #eff6ff !important;
+}
+
+.clickable-row:focus td:first-child,
+.clickable-row:focus-visible td:first-child {
+  box-shadow: inset 3px 0 0 #2563eb;
 }
 
 /* Tasks Card Styles */
@@ -1248,14 +1321,20 @@ export default {
 }
 
 .po-button.create {
-  background: #3b82f6;
+  background: #1d4ed8;
   color: white;
 }
 
 .po-button.create:hover {
-  background: #2563eb;
+  background: #1e40af;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+}
+
+.po-button:focus,
+.po-button:focus-visible {
+  outline: 2px solid #1e3a8a;
+  outline-offset: 2px;
 }
 
 .po-button.view {

@@ -5,8 +5,8 @@
       <p>{{ t('orders.description') }}</p>
     </div>
 
-    <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-if="loading" class="loading" role="status">{{ t('common.loading') }}</div>
+    <div v-else-if="error" class="error" role="alert">{{ error }}</div>
     <div v-else>
       <div class="stats-grid">
         <div class="stat-card success">
@@ -35,13 +35,13 @@
           <table class="orders-table">
             <thead>
               <tr>
-                <th class="col-order-number">{{ t('orders.table.orderNumber') }}</th>
-                <th class="col-customer">{{ t('orders.table.customer') }}</th>
-                <th class="col-items">{{ t('orders.table.items') }}</th>
-                <th class="col-status">{{ t('orders.table.status') }}</th>
-                <th class="col-date">{{ t('orders.table.orderDate') }}</th>
-                <th class="col-date">{{ t('orders.table.expectedDelivery') }}</th>
-                <th class="col-value">{{ t('orders.table.totalValue') }}</th>
+                <th scope="col" class="col-order-number">{{ t('orders.table.orderNumber') }}</th>
+                <th scope="col" class="col-customer">{{ t('orders.table.customer') }}</th>
+                <th scope="col" class="col-items">{{ t('orders.table.items') }}</th>
+                <th scope="col" class="col-status">{{ t('orders.table.status') }}</th>
+                <th scope="col" class="col-date">{{ t('orders.table.orderDate') }}</th>
+                <th scope="col" class="col-date">{{ t('orders.table.expectedDelivery') }}</th>
+                <th scope="col" class="col-value">{{ t('orders.table.totalValue') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -49,11 +49,22 @@
                 <td class="col-order-number"><strong>{{ order.order_number }}</strong></td>
                 <td class="col-customer">{{ translateCustomerName(order.customer) }}</td>
                 <td class="col-items">
-                  <div class="items-details">
-                    <div class="items-summary" @click="toggleItems(order.id)">
+                  <div class="items-details" :class="{ 'is-open': openItems[order.id] }">
+                    <button
+                      type="button"
+                      class="items-summary"
+                      :aria-expanded="openItems[order.id] ? 'true' : 'false'"
+                      :aria-controls="`order-items-${order.id}`"
+                      @click="toggleItems(order.id)"
+                    >
+                      <span class="items-marker" aria-hidden="true">▶</span>
                       {{ t('orders.itemsCount', { count: order.items.length }) }}
-                    </div>
-                    <div v-if="openItems[order.id]" class="items-dropdown">
+                    </button>
+                    <div
+                      v-show="openItems[order.id]"
+                      :id="`order-items-${order.id}`"
+                      class="items-dropdown"
+                    >
                       <div v-for="(item, idx) in order.items" :key="idx" class="item-entry">
                         <span class="item-name">{{ translateProductName(item.name) }}</span>
                         <span class="item-meta">{{ t('orders.quantity') }}: {{ item.quantity }} @ {{ currencySymbol }}{{ item.unit_price }}</span>
@@ -80,7 +91,7 @@
       <div class="card-header">
         <h3 class="card-title">{{ t('orders.submitted.title') }} ({{ submittedOrders.length }})</h3>
       </div>
-      <div v-if="submittedLoading" class="loading">{{ t('common.loading') }}</div>
+      <div v-if="submittedLoading" class="loading" role="status">{{ t('common.loading') }}</div>
       <div v-else-if="submittedError" class="error" role="alert">{{ submittedError }}</div>
       <p v-else-if="submittedOrders.length === 0" class="submitted-empty">
         {{ t('orders.submitted.empty') }}
@@ -90,13 +101,13 @@
         <table class="submitted-table">
           <thead>
             <tr>
-              <th>{{ t('orders.submitted.orderNumber') }}</th>
-              <th>{{ t('orders.submitted.submittedDate') }}</th>
-              <th>{{ t('orders.submitted.lines') }}</th>
-              <th>{{ t('orders.submitted.total') }}</th>
-              <th>{{ t('orders.submitted.leadTime') }}</th>
-              <th>{{ t('orders.submitted.expectedDelivery') }}</th>
-              <th>{{ t('orders.submitted.status') }}</th>
+              <th scope="col">{{ t('orders.submitted.orderNumber') }}</th>
+              <th scope="col">{{ t('orders.submitted.submittedDate') }}</th>
+              <th scope="col">{{ t('orders.submitted.lines') }}</th>
+              <th scope="col">{{ t('orders.submitted.total') }}</th>
+              <th scope="col">{{ t('orders.submitted.leadTime') }}</th>
+              <th scope="col">{{ t('orders.submitted.expectedDelivery') }}</th>
+              <th scope="col">{{ t('orders.submitted.status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -161,7 +172,7 @@ export default {
         orders.value = fetchedOrders.sort((a, b) => {
           const dateA = new Date(a.order_date)
           const dateB = new Date(b.order_date)
-          return dateB - dateA
+          return dateA - dateB
         })
       } catch (err) {
         error.value = 'Failed to load orders: ' + err.message
@@ -284,32 +295,43 @@ export default {
 
 .items-summary {
   cursor: pointer;
-  color: #3b82f6;
+  color: #1d4ed8;
+  font: inherit;
   font-weight: 500;
-  list-style: none;
+  line-height: inherit;
   user-select: none;
   display: inline-block;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  text-align: left;
 }
 
-.items-summary::-webkit-details-marker {
-  display: none;
-}
-
-.items-summary::before {
-  content: '▶';
+.items-marker {
   display: inline-block;
   margin-right: 0.375rem;
   font-size: 0.75rem;
   transition: transform 0.2s;
 }
 
-.items-details[open] .items-summary::before {
+.items-details.is-open .items-marker {
   transform: rotate(90deg);
 }
 
 .items-summary:hover {
-  color: #2563eb;
+  color: #1e3a8a;
   text-decoration: underline;
+}
+
+.items-summary:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.orders-table tbody tr:focus-within .col-items {
+  position: relative;
+  z-index: 12;
 }
 
 /* Dropdown container */
